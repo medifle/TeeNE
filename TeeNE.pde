@@ -29,13 +29,13 @@ void draw() {
 
   tees.update();
   tees.render();
-
-  showDebugInfo();
+  
+  tees.showDebugInfo();
 }
 
 void displayFrameRate() {
-  textSize(14);
-  text(frameRate, 2, 20);
+  textSize(12);
+  text(frameRate, 0, 20);
 }
 
 void showDebugInfo() {

@@ -30,7 +30,7 @@ class Tees {
   
   ArrayDeque<PBullet> getEnemyBulletsInAir(int teeId) {
     int enemyTeeId = getEnemyTeeId(teeId);
-    return tees[enemyTeeId].pistol.ammuInAir;
+    return tees[enemyTeeId].pistol.bulletsInAir;
   }
 
   void switchPlayer() {
@@ -51,6 +51,12 @@ class Tees {
   void render() {
     for (Tee t : tees) {
       t.render();
+    }
+  }
+  
+  void showDebugInfo() {
+    for (Tee t : tees) {
+      t.showDebugInfo();
     }
   }
 }

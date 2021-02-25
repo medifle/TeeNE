@@ -11,10 +11,10 @@ class Pistol {
   int shootable = 1;
 
   ArrayDeque<PBullet> ammu = new ArrayDeque<>();
-  ArrayDeque<PBullet> ammuInAir = new ArrayDeque<>();
+  ArrayDeque<PBullet> bulletsInAir = new ArrayDeque<>();
 
   // For drawing
-  PShape pistol;
+  PShape pistolShape;
 
   Pistol(Tee t) {
     tee = t;
@@ -28,28 +28,28 @@ class Pistol {
       ammu.add(new PBullet(this));
     }
   }
-  
+
   boolean shootReady() {
     return tee.pressShoot && shootable == 1;
   }
 
   void shoot() {
-    if (!ammu.isEmpty() && !tee.prevPressShoot) { // TODO: and no injury
+    if (!ammu.isEmpty() && !tee.prevPressShoot && tee.injuryCD == 0) {
       shootable = 1;
     } else {
       shootable = 0;
     }
-    
+
     if (shootReady()) {
       PBullet bullet = ammu.pollFirst();
       bullet.prepare();
-      ammuInAir.add(bullet);
+      bulletsInAir.add(bullet);
     }
     tee.prevPressShoot = tee.pressShoot;
   }
 
   void bulletsMove() {
-    for (Iterator<PBullet> iterator = ammuInAir.iterator(); iterator.hasNext(); ) {
+    for (Iterator<PBullet> iterator = bulletsInAir.iterator(); iterator.hasNext(); ) {
       PBullet b = iterator.next();
       b.move();
       if (!b.isShot) {
@@ -61,7 +61,7 @@ class Pistol {
 
   void loadWeaponShape() {
     // Todo: use svg
-    pistol = createShape(GROUP);
+    pistolShape = createShape(GROUP);
 
     PShape p0 = createShape();
     p0.beginShape();
@@ -101,29 +101,29 @@ class Pistol {
     p2.vertex(0, 14);
     p2.endShape(CLOSE);
 
-    pistol.addChild(p0);
-    pistol.addChild(p1);
-    pistol.addChild(p2);
+    pistolShape.addChild(p0);
+    pistolShape.addChild(p1);
+    pistolShape.addChild(p2);
   }
 
   void renderWeapon(float x, float y) {
     if (tee.face == -1) { // flip the weapon
       pushMatrix();
       scale(-1, 1);
-      shape(pistol, tee.face * x + 23, y-5);
+      shape(pistolShape, tee.face * x + 23, y-5);
       popMatrix();
     } else {
-      shape(pistol, x+23, y-5);
+      shape(pistolShape, x+23, y-5);
     }
   }
 
   void renderBullets() {
-    for (PBullet b : ammuInAir) {
+    for (PBullet b : bulletsInAir) {
       b.render();
     }
   }
 
-  void render(float x, float y) {
+  void render(float x, float y) {    
     renderWeapon(x, y);
     renderBullets();
   }
