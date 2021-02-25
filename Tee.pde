@@ -81,7 +81,7 @@ class Tee {
     pistol.shoot();
     pistol.bulletsMove();
   }
-  
+
   void updateEnemyDist(PVector enemyPos) {
     enemyDist.set(enemyPos.x - pos.x, enemyPos.y - pos.y);
   }
@@ -416,6 +416,31 @@ class Tee {
     }
   }
 
+  void showJoypad() {
+    fill(100);
+    int offsetX = 0;
+    if (teeId == 1) {
+      offsetX = 635;
+    }
+
+    int posY = 170;
+
+    textSize(18);
+    if (pressLeft) {
+      text("L", (24 + offsetX), terrain.posY + posY);
+    }
+    if (pressRight) {
+      text("R", (48 + offsetX), terrain.posY + posY);
+    }
+    // TODO need a keymap config
+    if (pressJump) {
+      text("Z", (72 + offsetX), terrain.posY + posY);
+    }
+    if (pressShoot) {
+      text("X", (96 + offsetX), terrain.posY + posY);
+    }
+  }
+
   void showDebugInfo() {
     fill(20);
     noStroke();
@@ -431,7 +456,7 @@ class Tee {
     text("pos.y " + nf(pos.y, 1, 2), 10 + offsetX, terrain.posY + 35);
     text("vel.x " + nf(vel.x, 1, 2), 100 + offsetX, terrain.posY + 20);
     text("vel.y " + nf(vel.y, 1, 2), 100 + offsetX, terrain.posY + 35);
-    
+
     // EnemyDist
     text("eds.x " + nf(enemyDist.x, 1, 2), 10 + offsetX, terrain.posY + 50);
     text("eds.y " + nf(enemyDist.y, 1, 2), 10 + offsetX, terrain.posY + 65);
@@ -455,23 +480,22 @@ class Tee {
     // Enemy bullet relative dists
     PBullet eb0 = null;
     if (enemyBulletsInAir != null) {
-      println("yay");
       eb0 = enemyBulletsInAir.peekFirst();
     }
     text("eb0.x " + nf(eb0 == null ? 0 : eb0.enemyDist.x, 1, 1), 175+offsetX, terrain.posY + 50);
     text("eb0.y " + nf(eb0 == null ? 0 : eb0.enemyDist.y, 1, 1), 175+offsetX, terrain.posY + 65);
-    
+
     PBullet eb1 = null;
     if (enemyBulletsInAir != null && enemyBulletsInAir.size() > 1) {
       eb1 = enemyBulletsInAir.peekLast();
     }
     text("eb1.x " + nf(eb1 == null ? 0 : eb1.enemyDist.x, 1, 1), 260+offsetX, terrain.posY + 50);
     text("eb1.y " + nf(eb1 == null ? 0 : eb1.enemyDist.y, 1, 1), 260+offsetX, terrain.posY + 65);
-    
+
     // Enemy bullet faces
     text("eb0.f " + (eb0 == null ? 0 : eb0.face), 175+offsetX, terrain.posY + 80);
     text("eb1.f " + (eb1 == null ? 0 : eb1.face), 260+offsetX, terrain.posY + 80);
-    
+
 
     if (teeId == 0) {
       text("isInAir " + isInAir(), 10, terrain.posY + 150);

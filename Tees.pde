@@ -54,6 +54,12 @@ class Tees {
     }
   }
   
+  void showJoypad() {
+    for (Tee t : tees) {
+      t.showJoypad();
+    }
+  }
+  
   void showDebugInfo() {
     for (Tee t : tees) {
       t.showDebugInfo();

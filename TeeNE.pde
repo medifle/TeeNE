@@ -30,7 +30,8 @@ void draw() {
   tees.update();
   tees.render();
   
-  tees.showDebugInfo();
+  tees.showJoypad();
+  //tees.showDebugInfo();
 }
 
 void displayFrameRate() {
