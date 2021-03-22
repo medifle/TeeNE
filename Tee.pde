@@ -8,6 +8,7 @@ class Tee {
   int size = 50;
   int maxHP = 14;
   int HP = maxHP;
+  int score = 0;
 
   boolean isBot = false;
   boolean pressLeft = false;
@@ -77,6 +78,8 @@ class Tee {
     processSensorData();
 
     calcInjury();
+    if (tournament.roundEndCode == 0) return;
+    
     move();
     pistol.shoot();
     pistol.bulletsMove();
@@ -112,7 +115,9 @@ class Tee {
         b.isShot = false; // Bullet disappears
         HP--;
 
-        //TODO Round end if HP == 0
+        if (HP == 0) {
+          tournament.endRound();
+        }
       }
     }
 
@@ -126,6 +131,7 @@ class Tee {
       float newPosY = pos.y + vel.y;
       yBoundaryCalibrate(newPosY);
 
+      // Simple X axis sliding
       float newPosX = pos.x + vel.x;
       xBoundaryCalibrate(newPosX);
     }
@@ -202,7 +208,7 @@ class Tee {
   }
 
   void updateLastMoveFrame() {
-    lastMoveFrame = frameCtr;
+    lastMoveFrame = tournament.frameCtr;
   }
 
   boolean isInAir() {
@@ -216,10 +222,19 @@ class Tee {
     pressShoot = false;
   }
 
+  void calcScore() {
+    score = (maxHP - tees.getEnemyHP(teeId)) * 10 - (maxHP - HP) * 5;
+    if (tournament.winner == teeId) {
+      score += 100 + tournament.roundTimeLeft;
+    } else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
+      score -= 100 + tournament.roundTimeLeft;
+    }
+  }
+
   void render() {
     // Injury invincible animation
     if (injuryCD > 0) {
-      if (frameCtr % 4 > 1) {
+      if (tournament.frameCtr % 4 > 1) {
         pistol.pistolShape.setVisible(true);
         handShape.setVisible(true);
         bodyShape.setVisible(true);
@@ -239,17 +254,17 @@ class Tee {
 
     // Recoil animation
     if (pistol.shootReady()) {
-      shootReadyFrame = frameCtr;
+      shootReadyFrame = tournament.frameCtr;
     }
     pushMatrix();
-    if (frameCtr - shootReadyFrame < 4) {
+    if (tournament.frameCtr - shootReadyFrame < 4) {
       translate(-1 * recoilOffset * face, 0);
     }
     pistol.render(pos.x, pos.y);
     renderHand(pos.x, pos.y);
     popMatrix();
 
-    renderBody(pos.x, pos.y, teeColor);
+    renderBody(pos.x, pos.y);
     renderEyes(pos.x, pos.y);
     renderHP();
   }
@@ -257,33 +272,36 @@ class Tee {
   void renderHP() {
     int offsetX = 10;
     int lx = 10 + offsetX;
-    int rx = width-178-offsetX;
+    int rx = width-234-offsetX;
     int y = 10;
     int h = 18;
     int halfInnerH = (h-2)/2;
+    int unitLength = 16;
 
     fill(60);
     stroke(20);
     strokeWeight(2);
     if (teeId == 0) {
-      rect(lx-1, y-1, maxHP*12+2, h); // black background
+      rect(lx-1, y-1, maxHP*unitLength+2, h); // black background
 
       fill(144, 242, 97); // shallow green layer
       noStroke();
-      rect(lx, y, HP*12, h-2);
+      rect(lx, y, HP*unitLength, h-2);
 
       fill(117, 191, 80); // dark green layer
-      rect(lx, y+halfInnerH, HP*12, halfInnerH);
+      rect(lx, y+halfInnerH, HP*unitLength, halfInnerH);
     } else {
-      rect(rx-1, y-1, maxHP*12+2, h);
+      rect(rx-1, y-1, maxHP*unitLength+2, h);
 
       fill(144, 242, 97);
       noStroke();
-      rect(rx, y, HP*12, h-2);
+      rect(rx, y, HP*unitLength, h-2);
 
       fill(117, 191, 80);
-      rect(rx, y+halfInnerH, HP*12, halfInnerH);
+      rect(rx, y+halfInnerH, HP*unitLength, halfInnerH);
     }
+    
+    stroke(20); // Restore stroke
   }
 
   void loadBodyShape() {
@@ -297,7 +315,7 @@ class Tee {
     }
   }
 
-  void renderBody(float x, float y, color c) {
+  void renderBody(float x, float y) {
     shape(bodyShape, x, y);
   }
 
@@ -366,7 +384,7 @@ class Tee {
       if (injuryCD > 0) {
         shape(hitEyesShape, face*x, y);
       } else {
-        if ((frameCtr - lastMoveFrame) > 300 && (frameCtr - lastMoveFrame) % 300 < 5) {
+        if ((tournament.frameCtr - lastMoveFrame) > 300 && (tournament.frameCtr - lastMoveFrame) % 300 < 5) {
           shape(blinkEyesShape, face*x, y);
         } else {
           shape(eyesShape, face*x, y);
@@ -378,7 +396,7 @@ class Tee {
         shape(hitEyesShape, x, y);
       } else {
         // Blink every 5s when idle
-        if ((frameCtr - lastMoveFrame) > 300 && (frameCtr - lastMoveFrame) % 300 < 5) {
+        if ((tournament.frameCtr - lastMoveFrame) > 300 && (tournament.frameCtr - lastMoveFrame) % 300 < 5) {
           shape(blinkEyesShape, x, y);
         } else { // Eyes
           shape(eyesShape, x, y);
@@ -442,8 +460,11 @@ class Tee {
   }
 
   void showDebugInfo() {
+    if (debug == false) return;
+    
     fill(20);
     noStroke();
+    textFont(FontSansSerif);
     textSize(12);
 
     int offsetX = 0;
@@ -465,13 +486,16 @@ class Tee {
     text("jumpable " + jumpable, 10+offsetX, terrain.posY + 95);
     text("injuryCD " + injuryCD, 100+offsetX, terrain.posY + 80);
 
+    tees.calcScore();
+    text("score " + score, 100+offsetX, terrain.posY + 95);
+
     // Bullet positions
     PBullet b0 = pistol.bulletsInAir.peekFirst();
     text("bu0.x " + nf(b0 == null ? 0 : b0.pos.x, 1, 1), 175+offsetX, terrain.posY + 20);
     text("bu0.y " + nf(b0 == null ? 0 : b0.pos.y, 1, 1), 175+offsetX, terrain.posY + 35);
 
     PBullet b1 = null;
-    if (pistol.bulletsInAir.size() > 1) {
+    if (pistol.bulletsInAir.size() > 1) { // If 2 bullets in the air, get the last one
       b1 = pistol.bulletsInAir.peekLast();
     }
     text("bu1.x " + nf(b1 == null ? 0 : b1.pos.x, 1, 1), 260+offsetX, terrain.posY + 20);
@@ -499,13 +523,11 @@ class Tee {
 
     if (teeId == 0) {
       text("isInAir " + isInAir(), 10, terrain.posY + 150);
-      text("frameCtr " + frameCtr, 10, terrain.posY + 165);
+      text("frameCtr " + tournament.frameCtr, 10, terrain.posY + 165);
       text("lastMoveFrame " + lastMoveFrame, 10, terrain.posY + 180);
       text("shootReadyFrame " + shootReadyFrame, 10, terrain.posY + 195);
     }
+    
+    stroke(20); // Restore stroke
   }
-
-  //int colorAlpha(color e, int t) {
-  //  return color(red(e), green(e), blue(e), (alpha(e) * t) / 255);
-  //}
 }

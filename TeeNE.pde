@@ -1,37 +1,36 @@
 //float unit = 1; // length unit
 
-int frameCtr; // Frame count per round
+boolean pause = false;
+boolean debug = true;
 
+Terrain terrain;
 Tee tee1, tee2;
 Tees tees;
 
-Terrain terrain;
+Tournament tournament;
 
-boolean pause = false;
-
+PFont FontSansSerif, FontKO;
 
 void setup() {
   pixelDensity(displayDensity());
   size(770, 550, P2D);
+  // loadFont to display better quality (but not perfect) in P2D mode
+  FontSansSerif = loadFont("SansSerif-60.vlw");
+  // createFont to avoid loadFont large vlw font and ground disappearing bug when rendered
+  FontKO = createFont("HelveticaNeue-MediumItalic", 90);
 
   terrain = new Terrain();
-
   tees = new Tees();
+
+  tournament = new Tournament();
+
 }
 
 void draw() {
-  frameCtr++;
-  background(248);
-  //background(25,25,77);
   //displayFrameRate();
 
-  terrain.render();
+  tournament.update();
 
-  tees.update();
-  tees.render();
-  
-  tees.showJoypad();
-  //tees.showDebugInfo();
 }
 
 void displayFrameRate() {
@@ -40,7 +39,7 @@ void displayFrameRate() {
 }
 
 void showDebugInfo() {
-  tees.getPlayer().showDebugInfo();
+  tees.getHumanPlayer().showDebugInfo();
 }
 
 void keyPressed() {
@@ -53,7 +52,7 @@ void keyReleased() {
 }
 
 void teeControlKeymap(int k, boolean decision) {
-  Tee playerTee = tees.getPlayer();
+  Tee playerTee = tees.getHumanPlayer();
   if (k == LEFT) {
     playerTee.pressLeft = decision;
     playerTee.updateLastMoveFrame();
@@ -72,11 +71,29 @@ void teeControlKeymap(int k, boolean decision) {
 void gameKeymap(char asciiKey) {
   switch(asciiKey) {
   case 'q':
-    tees.getPlayer().cancelPressStatus();
+    tees.getHumanPlayer().cancelPressStatus();
     tees.switchPlayer();
     break;
-  case 'v':
-    //todo
+  case 't':
+    //TODO start training
+    break;
+  case 'f':
+    // Fastforward training
+    tournament.skip ^= 1;
+    break;
+  case 's':
+    //TODO fastforward 1 round
+    break;
+  case 'd':
+    //TODO fastforward 10 rounds
+    break;
+  case 'n':
+    //TODO start next generation
+    if (tournament.roundEndCode == -1) {
+      tournament.init();
+    } else if (tournament.roundEndCode == -2) {
+      tournament.nextGen();
+    }
     break;
   case 'p':
     if (pause) {

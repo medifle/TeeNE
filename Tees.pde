@@ -17,30 +17,33 @@ class Tees {
   Tee get(int id) {
     return tees[id];
   }
-  
+
   int getEnemyTeeId(int teeId) {
     return (teeId == 0 ? 1 : 0);
   }
-  
-  // teeId the tee who need the info, not the enemy's teeId
+
+  int getEnemyHP(int teeId) {
+    return get(getEnemyTeeId(teeId)).HP;
+  }
+
+  // teeId The tee who need the info, not the enemy's teeId
   PVector getEnemyPos(int teeId) {
     int enemyTeeId = getEnemyTeeId(teeId);
-    return tees[enemyTeeId].pos;
+    return get(enemyTeeId).pos;
   }
-  
+
   ArrayDeque<PBullet> getEnemyBulletsInAir(int teeId) {
     int enemyTeeId = getEnemyTeeId(teeId);
-    return tees[enemyTeeId].pistol.bulletsInAir;
+    return get(enemyTeeId).pistol.bulletsInAir;
   }
 
   void switchPlayer() {
     humanTeeId = (humanTeeId == 0 ? 1 : 0);
   }
 
-  Tee getPlayer() {
-    return tees[humanTeeId];
+  Tee getHumanPlayer() {
+    return get(humanTeeId);
   }
-
 
   void update() {
     for (Tee t : tees) {
@@ -53,13 +56,28 @@ class Tees {
       t.render();
     }
   }
+
+  void calcScore() {
+    for (Tee t : tees) {
+      t.calcScore();
+    }
+  }
   
+  boolean isKOEnd() {
+    for (Tee t : tees) {
+      if (t.HP == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void showJoypad() {
     for (Tee t : tees) {
       t.showJoypad();
     }
   }
-  
+
   void showDebugInfo() {
     for (Tee t : tees) {
       t.showDebugInfo();

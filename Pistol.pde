@@ -66,6 +66,7 @@ class Pistol {
     PShape p0 = createShape();
     p0.beginShape();
     p0.fill(85);
+    p0.stroke(20);
     p0.strokeWeight(1.5);
     p0.vertex(0, -1);
     p0.vertex(16, -1);
@@ -79,6 +80,7 @@ class Pistol {
     PShape p1 = createShape();
     p1.beginShape();
     p1.fill(217);
+    p1.stroke(20);
     p1.strokeWeight(1.5);
     p1.vertex(0, 1);
     p1.vertex(24, 1);

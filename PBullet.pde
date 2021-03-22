@@ -4,16 +4,15 @@ class PBullet {
 
   float speed = 12;
 
+  int face;
   PVector pos;
   PVector vel;
-  
+
   // bullet.pos - enemy.pos
   // This is used by enemy's sensor
   // Stored in this class is to improve perf and simplify code
   // though in theory it is probably enemy's responbility to maintain the info
   PVector enemyDist;
-  
-  int face;
 
   boolean isShot = false;
 
@@ -68,10 +67,12 @@ class PBullet {
     bulletRShape = createShape(GROUP);
     PShape r0 = createShape(ELLIPSE, 0, 0, 20, 15);
     r0.setFill(color(253, 240, 156));
+    r0.setStroke(color(20));
     r0.setStrokeWeight(1.8);
 
     PShape r1 = createShape(ELLIPSE, 4, -2, 8, 6);
     r1.setFill(color(255, 248, 198));
+    r1.setStroke(color(20));
     r1.setStrokeWeight(0);
 
     bulletRShape.addChild(r0);
@@ -81,10 +82,12 @@ class PBullet {
     bulletLShape = createShape(GROUP);
     PShape l0 = createShape(ELLIPSE, 0, 0, 20, 15);
     l0.setFill(color(253, 240, 156));
+    l0.setStroke(color(20));
     l0.setStrokeWeight(1.8);
 
     PShape l1 = createShape(ELLIPSE, -4, -2, 8, 6);
     l1.setFill(color(255, 248, 198));
+    l1.setStroke(color(20));
     l1.setStrokeWeight(0);
 
     bulletLShape.addChild(l0);
