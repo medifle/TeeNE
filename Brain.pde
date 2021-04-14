@@ -11,4 +11,8 @@ class Brain {
   NeuralNetwork getNN() {
     return nn;
   }
+  
+  void syncScore(int score) {
+    this.score = score;
+  }
 }

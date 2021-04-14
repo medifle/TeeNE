@@ -11,7 +11,6 @@ class Tee {
   int score = 0;
 
   Brain brain;
-
   boolean brainControl = false;
   boolean pressLeft = false;
   boolean pressRight = false;
@@ -84,10 +83,11 @@ class Tee {
     loadEyesShape();
   }
 
-  //TODO
-  //Tee(int teeId, int brainN) {
-
-  //}
+  Tee(int teeId, Brain brain) {
+    this(teeId);
+    this.brain = brain;
+    this.brainControl = true;
+  }
 
   void update() {
     updateEnemyData();
@@ -281,6 +281,11 @@ class Tee {
       score += 100 + tournament.roundTimeLeft;
     } else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
       score -= 100 + tournament.roundTimeLeft;
+    }
+    
+    // Update brain score if brainControl
+    if (brainControl) {
+      brain.syncScore(score);
     }
   }
 

@@ -1,17 +1,15 @@
 class Tees {
   Tee[] tees = new Tee[2];
-  int humanTeeId; // 0 is the left, 1 is the right. Only effective when the tee brainControl is false
+  int humanTeeId = 0; // 0 is the left, 1 is the right. Only effective when the tee brainControl is false
 
   Tees() {
     tees[0] = new Tee(0);
     tees[1] = new Tee(1);
-    humanTeeId = 0;
   }
 
-  Tees(Tee t1, Tee t2, int id) {
+  Tees(Tee t1, Tee t2) {
     tees[0] = t1;
     tees[1] = t2;
-    humanTeeId = id;
   }
 
   Tee get(int id) {
@@ -25,7 +23,7 @@ class Tees {
   int getEnemyHP(int teeId) {
     return get(getEnemyTeeId(teeId)).HP;
   }
-  
+
   int getEnemyInjuryCD(int teeId) {
     return get(getEnemyTeeId(teeId)).injuryCD;
   }

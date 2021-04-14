@@ -11,14 +11,15 @@ class Tournament {
   int round = 0;
   int generation = 0; // 0 free play mode
 
-  //TODO Brain array
+  //TODO Population
+  ArrayList<Brain> population;
 
   // -1 tie
   // 0 teeId 0 wins
   // 1 teeId 1 wins
   int winner = -1;
 
-  int maxRoundTime = 60;
+  int maxRoundTime = 6;//test
   int roundTimeLeft = maxRoundTime;
 
   // -2 the current generation finished.
@@ -47,7 +48,13 @@ class Tournament {
 
     winner = -1;
     roundEndCode = -1;
-    tees = new Tees();
+    //tees = new Tees();
+    
+    //test
+    Tee tee0 = new Tee(0);
+    Brain b1 = new Brain();
+    Tee tee1 = new Tee(1, b1);
+    tees = new Tees(tee0, tee1);
   }
 
   void nextGen() {
