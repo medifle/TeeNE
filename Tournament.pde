@@ -1,35 +1,49 @@
 class Tournament {
-  int frameCtr = 0; // Frame count per round
+  int roundFrameCtr = 0; // Frame count per round
 
-  int stage;
-  int generation = 0; // 0 means free play mode
-  int winner = -1; // -1 means a tie by default
+  // 0 Not in training
+  // 1 Initialization
+  // 2 Evaluation
+  // 3 Selection & Reproduction
+  int stage = 0;
+
+  int[] stageRounds = {0, 2000, 894, 360};
   int round = 0;
-  int roundTotal = 0; // The running total of current generation rounds
+  int generation = 0; // 0 free play mode
+
+  //TODO Brain array
+
+  // -1 tie
+  // 0 teeId 0 wins
+  // 1 teeId 1 wins
+  int winner = -1;
+
   int maxRoundTime = 60;
   int roundTimeLeft = maxRoundTime;
-
 
   // -2 the current generation finished.
   // -1 ready to start the next generation
   // 0 the current round ended
   int roundEndCode = -1;
 
-  int maxRoundGapTime = 120;
+  int maxRoundGapTime = 120; // 120 frames, 2 seconds
   int roundGapTime = maxRoundGapTime;
 
-  int skip = 0;
+  int skip = 0; // 0 no fastforward training, 1 otherwise
 
-  Tournament() { // Brain?
+  Tournament() {
+    // TODO
   }
 
-  void init() {
-    frameCtr = 0;
+  void initNewRound() {
+    roundFrameCtr = 0;
     roundTimeLeft = maxRoundTime;
 
-    //if (generation > 0) {
-    //  //stage ?
-    //}
+    if (generation == 1) {
+      stage = 1;
+    } else if (generation > 1) {
+      stage = 3;
+    }
 
     winner = -1;
     roundEndCode = -1;
@@ -37,26 +51,32 @@ class Tournament {
   }
 
   void nextGen() {
-    //TODO data clean?
+    if (generation == 0) {
+      round = 1;
+      generation = 1;
+    }
 
-    init();
+    initNewRound();
   }
 
   void update() {
 
-    if (roundEndCode == 0) {
-      if (roundGapTime > 0) { // Display round results for 2s
+    if (roundEndCode == 0) { // Round ended
+      if (roundGapTime > 0) {
         roundGapTime--;
       } else if (roundGapTime == 0) {
         if (round > 0) {
           round++;
-          roundTotal++;
         }
 
-        init();
+        initNewRound();
       }
-    } else if (roundEndCode == -1) {
-      frameCtr++;
+    } else if (roundEndCode == -1) { // Training
+      roundFrameCtr++;
+      roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
+      if (roundTimeLeft == 0) {
+        endRound();
+      }
 
       // If no fastforward, draw game background
       if (skip == 0) {
@@ -64,18 +84,13 @@ class Tournament {
         terrain.render();
       }
 
-      //TODO fastforward
-      tees.update();
-
-      // If roundEndCode is the same, both tees are alive
-      // Check if round is timeout
+      // If game is in progress
       if (roundEndCode == -1) {
-        roundTimeLeft = maxRoundTime - frameCtr / 60;
-        if (roundTimeLeft == 0) {
-          endRound();
-        }
+        //TODO fastforward
+        tees.update();
       }
 
+      // Show necessary game elements only when no fastforward training
       if (skip == 0) {
         tees.render();
         showRoundInfo();
@@ -130,7 +145,7 @@ class Tournament {
       } else if (winner == 1) {
         text("WINNER", width-offsetX, 60);
       }
-    } else { // A draw
+    } else { // No winner, a tie
       fill(70);
       textFont(FontKO);
       textSize(40);

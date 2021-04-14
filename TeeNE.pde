@@ -11,6 +11,7 @@ Tournament tournament;
 
 PFont FontSansSerif, FontKO;
 
+
 void setup() {
   pixelDensity(displayDensity());
   size(770, 550, P2D);
@@ -21,16 +22,13 @@ void setup() {
 
   terrain = new Terrain();
   tees = new Tees();
-
   tournament = new Tournament();
-
 }
 
 void draw() {
   //displayFrameRate();
 
   tournament.update();
-
 }
 
 void displayFrameRate() {
@@ -53,6 +51,8 @@ void keyReleased() {
 
 void teeControlKeymap(int k, boolean decision) {
   Tee playerTee = tees.getHumanPlayer();
+  if (playerTee.brainControl) return;
+
   if (k == LEFT) {
     playerTee.pressLeft = decision;
     playerTee.updateLastMoveFrame();
@@ -74,26 +74,13 @@ void gameKeymap(char asciiKey) {
     tees.getHumanPlayer().cancelPressStatus();
     tees.switchPlayer();
     break;
-  case 't':
-    //TODO start training
-    break;
   case 'f':
     // Fastforward training
     tournament.skip ^= 1;
     break;
-  case 's':
-    //TODO fastforward 1 round
-    break;
-  case 'd':
-    //TODO fastforward 10 rounds
-    break;
   case 'n':
     //TODO start next generation
-    if (tournament.roundEndCode == -1) {
-      tournament.init();
-    } else if (tournament.roundEndCode == -2) {
-      tournament.nextGen();
-    }
+    tournament.nextGen();
     break;
   case 'p':
     if (pause) {

@@ -5,7 +5,7 @@ class Pistol {
 
   int capacity = 2; // ammu capacity
 
-  // {0, 1}
+  // {0,1}
   // 1 means ability to shoot, 0 otherwise
   // if within injury cool time, it is 0
   int shootable = 1;
@@ -13,8 +13,9 @@ class Pistol {
   ArrayDeque<PBullet> ammu = new ArrayDeque<>();
   ArrayDeque<PBullet> bulletsInAir = new ArrayDeque<>();
 
-  // For drawing
+  /* <drawing> */
   PShape pistolShape;
+  /* </drawing> */
 
   Pistol(Tee t) {
     tee = t;
@@ -60,7 +61,7 @@ class Pistol {
   }
 
   void loadWeaponShape() {
-    // Todo: use svg
+    // TBD: use svg
     pistolShape = createShape(GROUP);
 
     PShape p0 = createShape();
@@ -125,7 +126,7 @@ class Pistol {
     }
   }
 
-  void render(float x, float y) {    
+  void render(float x, float y) {
     renderWeapon(x, y);
     renderBullets();
   }

@@ -1,6 +1,6 @@
 class Tees {
   Tee[] tees = new Tee[2];
-  int humanTeeId; // 0 is player 1, 1 is player 2
+  int humanTeeId; // 0 is the left, 1 is the right. Only effective when the tee brainControl is false
 
   Tees() {
     tees[0] = new Tee(0);
@@ -62,7 +62,7 @@ class Tees {
       t.calcScore();
     }
   }
-  
+
   boolean isKOEnd() {
     for (Tee t : tees) {
       if (t.HP == 0) {

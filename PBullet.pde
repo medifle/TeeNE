@@ -1,5 +1,5 @@
 class PBullet {
-  // TODO: generalize the Bullet type
+  // TBD: generalize the Bullet type
   Pistol weapon;
 
   float speed = 12;
@@ -12,19 +12,20 @@ class PBullet {
   // This is used by enemy's sensor
   // Stored in this class is to improve perf and simplify code
   // though in theory it is probably enemy's responbility to maintain the info
-  PVector enemyDist;
+  PVector bulletEnemyDist;
 
   boolean isShot = false;
 
-  // For drawing
+  /* <drawing> */
   PShape bulletRShape, bulletLShape;
+  /* </drawing> */
 
-  // TODO: Need a Weapon absract class to generalize
+  // TBD: need a Weapon absract class to generalize
   PBullet(Pistol p) {
     weapon = p;
     pos = new PVector();
     vel = new PVector();
-    enemyDist = new PVector();
+    bulletEnemyDist = new PVector();
 
     loadBulletShape();
   }
@@ -36,18 +37,16 @@ class PBullet {
     isShot = true;
   }
 
-  // Enemy relative distance
-  // x enemy pos.x
-  // y enemy pos.y
-  void updateEnemyDist(float x, float y) {
-    enemyDist.set(pos.x - x, pos.y - y);
+  // Bullet - Enemy relative distance
+  void updateBulletEnemyDist(float x, float y) {
+    bulletEnemyDist.set(pos.x - x, pos.y - y);
   }
 
   void reset() {
     face = 0;
     pos.set(0, 0);
     vel.set(0, 0);
-    enemyDist.set(0, 0);
+    bulletEnemyDist.set(0, 0);
     isShot = false;
   }
 

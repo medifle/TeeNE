@@ -1,22 +1,26 @@
 class Tee {
   int teeId;
 
-  PVector pos;
-  PVector vel = new PVector(0, 0);
-
   int face;
   int size = 50;
   int maxHP = 14;
   int HP = maxHP;
   int score = 0;
 
-  boolean isBot = false;
+  Brain brain;
+
+  boolean brainControl = false;
   boolean pressLeft = false;
   boolean pressRight = false;
   boolean pressJump = false;
   boolean pressShoot = false;
   boolean prevPressShoot = false; // Only fire once when press&hold the pressShoot key
 
+
+  /* <physics> */
+  PVector pos;
+  PVector vel = new PVector(0, 0);
+  
   // Injury cooldown represented by the number of frames
   // Tee is invincible during this period
   int maxInjuryCD = 21;
@@ -35,8 +39,11 @@ class Tee {
   float airFriction = 0.25;
   float landFriction = 3;
   float maxPosY = terrain.posY-size/2;
+  /* </physics> */
 
-  Pistol pistol = new Pistol(this); // Current weapon, only pistol for now
+
+  // Weapon being used, only pistol for now
+  Pistol pistol = new Pistol(this);
 
   // Sensors that detect the enemy relative distance
   // If positive, the enemy is on the right. If negative, it is on the left
@@ -44,18 +51,18 @@ class Tee {
 
   // NN should only know the number of bullets (implicitly)
   // and their relative distances and faces
-  // For distance
-  // If only one bullet in screen, always use the front element
+  // If only one bullet in screen, the front element of the deque is the bullet
   // If two bullets in screen, the front element is the first bullet fired
   ArrayDeque<PBullet> enemyBulletsInAir;
 
-  // For drawing
+  /* <drawing> */
   color teeColor;
   int lastMoveFrame = 0; // Used for blinking eyes, the last frame tee is idle
   // For recoil animation
   int shootReadyFrame = -99;
   int recoilOffset = 6;
   PShape handShape, bodyShape, eyesShape, blinkEyesShape, hitEyesShape;
+  /* </drawing> */
 
   Tee(int teeId) {
     this.teeId = teeId;
@@ -73,13 +80,20 @@ class Tee {
     loadBodyShape();
     loadEyesShape();
   }
+  
+  //TODO
+  //Tee(int teeId, int brainN) {
+    
+  //}
 
   void update() {
-    processSensorData();
+    updateEnemyData();
+    think();
 
+    // calculate the current frame based on think() result
     calcInjury();
     if (tournament.roundEndCode == 0) return;
-    
+
     move();
     pistol.shoot();
     pistol.bulletsMove();
@@ -89,7 +103,7 @@ class Tee {
     enemyDist.set(enemyPos.x - pos.x, enemyPos.y - pos.y);
   }
 
-  void processSensorData() {
+  void updateEnemyData() {
     // Update enemyDist
     PVector enemyPos = tees.getEnemyPos(teeId);
     updateEnemyDist(enemyPos);
@@ -97,17 +111,19 @@ class Tee {
     // Update enemy bullet dists
     enemyBulletsInAir = tees.getEnemyBulletsInAir(teeId);
     for (PBullet b : enemyBulletsInAir) {
-      b.updateEnemyDist(pos.x, pos.y);
+      b.updateBulletEnemyDist(pos.x, pos.y);
     }
+  }
 
-    // TODO calc the input for NN
+  void think() {
+    //TODO
   }
 
   void calcInjury() {
     ArrayDeque<PBullet> enemyBulletsInAir = tees.getEnemyBulletsInAir(teeId);
     for (PBullet b : enemyBulletsInAir) {
-      if (injuryCD == 0 && b.enemyDist.x > -24 && b.enemyDist.x < 24
-        && b.enemyDist.y > -36 && b.enemyDist.y < 42) {
+      if (injuryCD == 0 && b.bulletEnemyDist.x > -24 && b.bulletEnemyDist.x < 24
+        && b.bulletEnemyDist.y > -36 && b.bulletEnemyDist.y < 42) {
         injuryCD = maxInjuryCD;
         face = -1 * b.face; // When hit, let player face the bullet-coming direction
         vel.x = velHitX * face; // Hit physics
@@ -167,7 +183,7 @@ class Tee {
       } else {
         vel.y += gravity;
       }
-    } else if (jumpable == 0) {  // If jump key is released and the player is in the air
+    } else if (jumpable == 0) {   // If jump key is released and the player is in the air
       if (vel.y < shortJumpCap) { // Player velocity is capped to implement short jump
         vel.y = shortJumpCap;
       } else {
@@ -208,7 +224,7 @@ class Tee {
   }
 
   void updateLastMoveFrame() {
-    lastMoveFrame = tournament.frameCtr;
+    lastMoveFrame = tournament.roundFrameCtr;
   }
 
   boolean isInAir() {
@@ -234,7 +250,7 @@ class Tee {
   void render() {
     // Injury invincible animation
     if (injuryCD > 0) {
-      if (tournament.frameCtr % 4 > 1) {
+      if (tournament.roundFrameCtr % 4 > 1) {
         pistol.pistolShape.setVisible(true);
         handShape.setVisible(true);
         bodyShape.setVisible(true);
@@ -254,10 +270,10 @@ class Tee {
 
     // Recoil animation
     if (pistol.shootReady()) {
-      shootReadyFrame = tournament.frameCtr;
+      shootReadyFrame = tournament.roundFrameCtr;
     }
     pushMatrix();
-    if (tournament.frameCtr - shootReadyFrame < 4) {
+    if (tournament.roundFrameCtr - shootReadyFrame < 4) {
       translate(-1 * recoilOffset * face, 0);
     }
     pistol.render(pos.x, pos.y);
@@ -300,7 +316,7 @@ class Tee {
       fill(117, 191, 80);
       rect(rx, y+halfInnerH, HP*unitLength, halfInnerH);
     }
-    
+
     stroke(20); // Restore stroke
   }
 
@@ -384,7 +400,7 @@ class Tee {
       if (injuryCD > 0) {
         shape(hitEyesShape, face*x, y);
       } else {
-        if ((tournament.frameCtr - lastMoveFrame) > 300 && (tournament.frameCtr - lastMoveFrame) % 300 < 5) {
+        if ((tournament.roundFrameCtr - lastMoveFrame) > 300 && (tournament.roundFrameCtr - lastMoveFrame) % 300 < 5) {
           shape(blinkEyesShape, face*x, y);
         } else {
           shape(eyesShape, face*x, y);
@@ -396,7 +412,7 @@ class Tee {
         shape(hitEyesShape, x, y);
       } else {
         // Blink every 5s when idle
-        if ((tournament.frameCtr - lastMoveFrame) > 300 && (tournament.frameCtr - lastMoveFrame) % 300 < 5) {
+        if ((tournament.roundFrameCtr - lastMoveFrame) > 300 && (tournament.roundFrameCtr - lastMoveFrame) % 300 < 5) {
           shape(blinkEyesShape, x, y);
         } else { // Eyes
           shape(eyesShape, x, y);
@@ -450,7 +466,7 @@ class Tee {
     if (pressRight) {
       text("R", (48 + offsetX), terrain.posY + posY);
     }
-    // TODO need a keymap config
+    // TBD: need a keymap config
     if (pressJump) {
       text("Z", (72 + offsetX), terrain.posY + posY);
     }
@@ -461,7 +477,7 @@ class Tee {
 
   void showDebugInfo() {
     if (debug == false) return;
-    
+
     fill(20);
     noStroke();
     textFont(FontSansSerif);
@@ -506,15 +522,15 @@ class Tee {
     if (enemyBulletsInAir != null) {
       eb0 = enemyBulletsInAir.peekFirst();
     }
-    text("eb0.x " + nf(eb0 == null ? 0 : eb0.enemyDist.x, 1, 1), 175+offsetX, terrain.posY + 50);
-    text("eb0.y " + nf(eb0 == null ? 0 : eb0.enemyDist.y, 1, 1), 175+offsetX, terrain.posY + 65);
+    text("eb0.x " + nf(eb0 == null ? 0 : eb0.bulletEnemyDist.x, 1, 1), 175+offsetX, terrain.posY + 50);
+    text("eb0.y " + nf(eb0 == null ? 0 : eb0.bulletEnemyDist.y, 1, 1), 175+offsetX, terrain.posY + 65);
 
     PBullet eb1 = null;
     if (enemyBulletsInAir != null && enemyBulletsInAir.size() > 1) {
       eb1 = enemyBulletsInAir.peekLast();
     }
-    text("eb1.x " + nf(eb1 == null ? 0 : eb1.enemyDist.x, 1, 1), 260+offsetX, terrain.posY + 50);
-    text("eb1.y " + nf(eb1 == null ? 0 : eb1.enemyDist.y, 1, 1), 260+offsetX, terrain.posY + 65);
+    text("eb1.x " + nf(eb1 == null ? 0 : eb1.bulletEnemyDist.x, 1, 1), 260+offsetX, terrain.posY + 50);
+    text("eb1.y " + nf(eb1 == null ? 0 : eb1.bulletEnemyDist.y, 1, 1), 260+offsetX, terrain.posY + 65);
 
     // Enemy bullet faces
     text("eb0.f " + (eb0 == null ? 0 : eb0.face), 175+offsetX, terrain.posY + 80);
@@ -523,11 +539,11 @@ class Tee {
 
     if (teeId == 0) {
       text("isInAir " + isInAir(), 10, terrain.posY + 150);
-      text("frameCtr " + tournament.frameCtr, 10, terrain.posY + 165);
+      text("frameCtr " + tournament.roundFrameCtr, 10, terrain.posY + 165);
       text("lastMoveFrame " + lastMoveFrame, 10, terrain.posY + 180);
       text("shootReadyFrame " + shootReadyFrame, 10, terrain.posY + 195);
     }
-    
+
     stroke(20); // Restore stroke
   }
 }

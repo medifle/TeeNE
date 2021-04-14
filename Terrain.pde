@@ -1,7 +1,7 @@
 class Terrain {
   float posY;
   float groundOffset = 1;
-  
+
   float leftBoundary = 4;
   float rightBoundary = width - 4;
 
@@ -14,7 +14,7 @@ class Terrain {
     noStroke();
     fill(230);
     rect(0, posY+groundOffset, width, height-posY);
-    
+
     // The ground line
     stroke(60);
     strokeWeight(1);
