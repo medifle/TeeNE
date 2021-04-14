@@ -4,7 +4,11 @@ class PBullet {
 
   float speed = 12;
 
+  // 0 not fired
+  // 1 facing right
+  // -1 facing left
   int face;
+  
   PVector pos;
   PVector vel;
 

@@ -25,6 +25,10 @@ class Tees {
   int getEnemyHP(int teeId) {
     return get(getEnemyTeeId(teeId)).HP;
   }
+  
+  int getEnemyInjuryCD(int teeId) {
+    return get(getEnemyTeeId(teeId)).injuryCD;
+  }
 
   // teeId The tee who need the info, not the enemy's teeId
   PVector getEnemyPos(int teeId) {

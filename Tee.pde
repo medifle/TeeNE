@@ -1,7 +1,10 @@
 class Tee {
   int teeId;
 
+  // 1 facing right
+  // -1 facing left
   int face;
+
   int size = 50;
   int maxHP = 14;
   int HP = maxHP;
@@ -20,7 +23,7 @@ class Tee {
   /* <physics> */
   PVector pos;
   PVector vel = new PVector(0, 0);
-  
+
   // Injury cooldown represented by the number of frames
   // Tee is invincible during this period
   int maxInjuryCD = 21;
@@ -80,10 +83,10 @@ class Tee {
     loadBodyShape();
     loadEyesShape();
   }
-  
+
   //TODO
   //Tee(int teeId, int brainN) {
-    
+
   //}
 
   void update() {
@@ -116,7 +119,41 @@ class Tee {
   }
 
   void think() {
-    //TODO
+    if (brainControl) {
+      /* <prepare input> */
+      float[] in = new float[14];
+      in[0] = map(vel.y, -15, 15, -1, 1); // (-1,1)
+      in[1] = face; // {-1,1}
+      in[2] = pistol.shootable; // {0,1}
+      in[3] = jumpable; // {0,1}
+      in[4] = map(injuryCD, 0, 20, 0, 1); // [0,1]
+      in[5] = map(enemyDist.x, -762, 762, -2.4, 2.4); // [-2.4,2.4]
+      in[6] = map(enemyDist.y, -150, 150, -1, 1); // (-1,1)
+
+      PBullet eb0 = enemyBulletsInAir.peekFirst();
+      in[7] = (eb0 == null ? 0 : eb0.face); // {-1,0,1}
+      in[8] = (eb0 == null ? 0 : map(eb0.bulletEnemyDist.x, -685, 685, -2.2, 2.2)); // [-2.2,2.2]
+      in[9] = (eb0 == null ? 0 : map(eb0.bulletEnemyDist.y, -150, 150, -1, 1)); // (-1,1)
+
+      PBullet eb1 = null;
+      if (enemyBulletsInAir != null && enemyBulletsInAir.size() > 1) {
+        eb1 = enemyBulletsInAir.peekLast();
+      }
+      in[10] = (eb1 == null ? 0 : eb1.face); // {-1,0,1}
+      in[11] = (eb1 == null ? 0 : map(eb1.bulletEnemyDist.x, -685, 685, -2.2, 2.2)); // [-2.2,2.2]
+      in[12] = (eb1 == null ? 0 : map(eb1.bulletEnemyDist.y, -150, 150, -1, 1)); // (-1,1)
+      in[13] = map(tees.getEnemyInjuryCD(teeId), 0, 20, 0, 1); // [0,1]
+      /* </prepare input> */
+
+      NeuralNetwork nn = brain.getNN();
+      float[] out = nn.feedforward(in);
+
+      // Convert output value to game control intruction
+      pressLeft = (out[0] > 0.0);
+      pressRight = (out[1] > 0.0);
+      pressJump = (out[2] > 0.0);
+      pressShoot = (out[3] > 0.0);
+    }
   }
 
   void calcInjury() {
