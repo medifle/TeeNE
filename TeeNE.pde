@@ -74,7 +74,7 @@ void gameKeymap(char asciiKey) {
     tees.getHumanPlayer().cancelPressStatus();
     tees.switchPlayer();
     break;
-  case 'f':
+  case 'v':
     // Fastforward training
     tournament.skip ^= 1;
     break;

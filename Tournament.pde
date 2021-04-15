@@ -111,37 +111,37 @@ class Tournament {
         initNewRound();
       }
     } else if (roundEndCode == -1) { // Training
-      roundFrameCtr++;
-      roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
-      if (roundTimeLeft == 0) {
-        endRound();
-      }
-
-      // If no fastforward, draw game background
-      if (skip == 0) {
-        background(248); //background(25,25,77);
-        terrain.render();
-      }
-
       // If game is in progress
-      if (roundEndCode == -1) {
-        //TODO fastforward
-        tees.update();
+      while (roundEndCode == -1) {
+        roundFrameCtr++;
+        roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
+        if (roundTimeLeft == 0) {
+          endRound();
+        }
 
-        // No-motion detection
-        if (roundFrameCtr % detectionGap == 0 && tees.areBrainControl()) {
-          float[][] ins = prepareIns();
+        if (roundEndCode == -1) {
+          tees.update();
 
-          if (isInsEqual(ins)) {
-            endRound();
-          } else {
-            prevIns = ins;
+          // No-motion detection
+          if (roundFrameCtr % detectionGap == 0 && tees.areBrainControl()) {
+            float[][] ins = prepareIns();
+
+            if (isInsEqual(ins)) {
+              endRound();
+            } else {
+              prevIns = ins;
+            }
           }
         }
+
+        if (skip == 0) break;
       }
+
 
       // Show necessary game elements only when no fastforward training
       if (skip == 0) {
+        background(248);
+        terrain.render();
         tees.render();
         showRoundInfo();
         tees.showJoypad();
@@ -185,7 +185,7 @@ class Tournament {
     Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score));
     population.add(group[4]);
 
-    println("Population: " + population);//test
+    println("Population: " + population + "\n");//test
   }
 
   Brain[] getRandomBrains(int size) {
@@ -266,6 +266,7 @@ class Tournament {
     return match;
   }
 
+  //TODO
   Brain[] groupFight2(Brain[] group) {
     if (group.length != 2) throw new RuntimeException("Invalid group length.");
     if (brainGroup2Ctr < 1 || brainGroup2Ctr > 2) throw new RuntimeException("Invalid round counter.");
@@ -354,6 +355,6 @@ class Tournament {
     println(Arrays.toString(randomGroup));//test
 
     roundEndCode = 0;
-    roundGapTime = maxRoundGapTime;
+    roundGapTime = (skip > 0) ? 0 : maxRoundGapTime;
   }
 }
