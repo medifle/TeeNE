@@ -11,8 +11,16 @@ class Tournament {
   int round = 0;
   int generation = 0; // 0 free play mode
 
-  //TODO Population
   ArrayList<Brain> population;
+  
+  /* <group fight> */
+  Brain[] brainGroup5 = new Brain[5];
+  Brain[] brainGroup2 = new Brain[2];
+  int brainGroup5Ctr = 0; // [1-10]
+  int brainGroup2Ctr = 0; // [1-2]
+  /* </group fight> */
+  
+  ArrayDeque<Brain> evalDeque; // Used in Evaluation stage
 
   // -1 tie
   // 0 teeId 0 wins
@@ -33,12 +41,14 @@ class Tournament {
   int skip = 0; // 0 no fastforward training, 1 otherwise
 
   Tournament() {
-    // TODO
+    population = new ArrayList<>();
   }
 
   void initNewRound() {
     roundFrameCtr = 0;
     roundTimeLeft = maxRoundTime;
+    winner = -1;
+    roundEndCode = -1;
 
     if (generation == 1) {
       stage = 1;
@@ -46,15 +56,101 @@ class Tournament {
       stage = 3;
     }
 
-    winner = -1;
-    roundEndCode = -1;
-    //tees = new Tees();
     
+
+
+
     //test
-    Tee tee0 = new Tee(0);
-    Brain b1 = new Brain();
-    Tee tee1 = new Tee(1, b1);
-    tees = new Tees(tee0, tee1);
+    //Tee tee0 = new Tee(0);
+    //Brain b1 = new Brain();
+    //Tee tee1 = new Tee(1, b1);
+    //tees = new Tees(tee0, tee1);
+  }
+
+  Brain[] groupFight5(Brain[] group) {
+    if (group.length != 5) throw new RuntimeException("Invalid group length.");
+    if (brainGroup5Ctr < 1 || brainGroup5Ctr > 10) throw new RuntimeException("Invalid round counter.");
+    
+    Brain[] match = new Brain[2];
+    int ctrMod = brainGroup5Ctr % 10;
+
+    switch (ctrMod) {
+    case 1:
+      println("groupFight5: case 1");//test
+      match[0] = group[0];
+      match[1] = group[1];
+      break;
+    case 2:
+      println("groupFight5: case 2");//test
+      match[0] = group[2];
+      match[1] = group[3];
+      break;
+    case 3:
+      println("groupFight5: case 3");//test
+      match[0] = group[4];
+      match[1] = group[0];
+      break;
+    case 4:
+      println("groupFight5: case 4");//test
+      match[0] = group[1];
+      match[1] = group[2];
+      break;
+    case 5:
+      println("groupFight5: case 5");//test
+      match[0] = group[3];
+      match[1] = group[4];
+      break;
+    case 6:
+      println("groupFight5: case 6");//test
+      match[0] = group[0];
+      match[1] = group[2];
+      break;
+    case 7:
+      println("groupFight5: case 7");//test
+      match[0] = group[1];
+      match[1] = group[3];
+      break;
+    case 8:
+      println("groupFight5: case 8");//test
+      match[0] = group[2];
+      match[1] = group[4];
+      break;
+    case 9:
+      println("groupFight5: case 9");//test
+      match[0] = group[3];
+      match[1] = group[0];
+      break;
+    case 0:
+      println("groupFight5: case 0");//test
+      match[0] = group[4];
+      match[1] = group[1];
+      break;
+    }
+
+    return match;
+  }
+
+  Brain[] groupFight2(Brain[] group) {
+    if (group.length != 2) throw new RuntimeException("Invalid group length.");
+    if (brainGroup2Ctr < 1 || brainGroup2Ctr > 2) throw new RuntimeException("Invalid round counter.");
+
+    Brain[] match = new Brain[2];
+    int ctrMod = brainGroup2Ctr % 2;
+
+    switch (ctrMod) {
+    case 1:
+      println("groupFight2: case 1");//test
+      match[0] = group[0];
+      match[1] = group[1];
+      break;
+    case 0:
+      println("groupFight2: case 0");//test
+      match[0] = group[1];
+      match[1] = group[0];
+      break;
+    }
+
+    return match;
   }
 
   void nextGen() {
@@ -108,7 +204,7 @@ class Tournament {
           showRoundResult();
         }
       }
-    } else if (roundEndCode == -2) {
+    } else if (roundEndCode == -2) { // Generation finished.
       //TODO
     }
   }
