@@ -7,7 +7,7 @@ class Tournament {
   // 3 Selection & Reproduction
   int stage = 0;
 
-  int[] stageRounds = {0, 2000, 894, 360};
+  int[] stageRound = {0, 2000, 894, 360};
   int round = 0;
   int generation = 0; // 0 free play mode
 
@@ -95,7 +95,7 @@ class Tournament {
         }
 
         if (generation == 1) {
-          if (stage == 1 && round == stageRounds[stage]) {
+          if (stage == 1 && round == stageRound[stage]) {
             brainGroup5Ctr = 0;
             randomGroup = null; // Clean randomGroup
             stage = 2; // Enter stage 2
@@ -111,7 +111,8 @@ class Tournament {
         initNewRound();
       }
     } else if (roundEndCode == -1) { // Training
-      // If game is in progress
+      // If game is in progress, do training
+      // fastforward training if skip != 0
       while (roundEndCode == -1) {
         roundFrameCtr++;
         roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
@@ -134,22 +135,21 @@ class Tournament {
           }
         }
 
+        background(248);
+        terrain.render();
+        showTrainingStatus();
+
         if (skip == 0) break;
       }
 
-
       // Show necessary game elements only when no fastforward training
       if (skip == 0) {
-        background(248);
-        terrain.render();
+
         tees.render();
         showRoundInfo();
         tees.showJoypad();
-        tees.showDebugInfo();
-
-        if (roundEndCode == 0) {
-          showRoundResult();
-        }
+        if (debug) tees.showDebugInfo();
+        if (roundEndCode == 0) showRoundResult();
       }
     } else if (roundEndCode == -2) { // Generation finished.
       //TODO
@@ -349,12 +349,26 @@ class Tournament {
     textAlign(LEFT, BASELINE); // Restore default setting
   }
 
+  void showTrainingStatus() {
+    fill(20);
+    noStroke();
+    textFont(FontSansSerif);
+    textSize(12);
+
+    text("Gen " + generation, 10, terrain.posY + 20);
+    text("Stage " + stage, 10, terrain.posY + 35);
+    text("Round " + round, 10, terrain.posY + 50);
+    text("Stage Round " + stageRound[stage], 10, terrain.posY + 65);
+
+    stroke(20); // Restore stroke
+  }
+
   void endRound() {
     selectWinner();
     tees.syncScore();
-    println(Arrays.toString(randomGroup));//test
+    //println(Arrays.toString(randomGroup));//test
 
     roundEndCode = 0;
-    roundGapTime = (skip > 0) ? 0 : maxRoundGapTime;
+    roundGapTime = (skip == 0) ? maxRoundGapTime : 0;
   }
 }

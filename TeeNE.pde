@@ -36,10 +36,6 @@ void displayFrameRate() {
   text(frameRate, 0, 20);
 }
 
-void showDebugInfo() {
-  tees.getHumanPlayer().showDebugInfo();
-}
-
 void keyPressed() {
   teeControlKeymap(keyCode, true);
   gameKeymap(key);

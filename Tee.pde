@@ -525,8 +525,6 @@ class Tee {
   }
 
   void showDebugInfo() {
-    if (debug == false) return;
-
     fill(20);
     noStroke();
     textFont(FontSansSerif);
