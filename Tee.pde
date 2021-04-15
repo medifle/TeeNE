@@ -282,8 +282,12 @@ class Tee {
     } else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
       score -= 100 + tournament.roundTimeLeft;
     }
-    
-    // Update brain score if brainControl
+  }
+
+  void syncScore() {
+    calcScore();
+
+    // Update brain score if brainControl is true
     if (brainControl) {
       brain.syncScore(score);
     }

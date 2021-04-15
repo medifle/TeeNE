@@ -79,8 +79,9 @@ void gameKeymap(char asciiKey) {
     tournament.skip ^= 1;
     break;
   case 'n':
-    //TODO start next generation
-    tournament.nextGen();
+    if (tournament.roundEndCode == -2) {
+      tournament.nextGen();
+    }
     break;
   case 'p':
     if (pause) {

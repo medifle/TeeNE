@@ -12,14 +12,13 @@ class Tournament {
   int generation = 0; // 0 free play mode
 
   ArrayList<Brain> population;
-  
+
   /* <group fight> */
-  Brain[] brainGroup5 = new Brain[5];
-  Brain[] brainGroup2 = new Brain[2];
-  int brainGroup5Ctr = 0; // [1-10]
-  int brainGroup2Ctr = 0; // [1-2]
+  Brain[] randomGroup;
+  int brainGroup5Ctr = 0; // effective range [1-10], 0 initial value
+  int brainGroup2Ctr = 0; // effective range [1-2], 0 initial value
   /* </group fight> */
-  
+
   ArrayDeque<Brain> evalDeque; // Used in Evaluation stage
 
   // -1 tie
@@ -33,7 +32,7 @@ class Tournament {
   // -2 the current generation finished.
   // -1 ready to start the next generation
   // 0 the current round ended
-  int roundEndCode = -1;
+  int roundEndCode = -2;
 
   int maxRoundGapTime = 120; // 120 frames, 2 seconds
   int roundGapTime = maxRoundGapTime;
@@ -46,31 +45,125 @@ class Tournament {
 
   void initNewRound() {
     roundFrameCtr = 0;
-    roundTimeLeft = maxRoundTime;
     winner = -1;
+    roundTimeLeft = maxRoundTime;
     roundEndCode = -1;
 
     if (generation == 1) {
-      stage = 1;
+      if (round == 1) {
+        stage = 1;
+      }
     } else if (generation > 1) {
-      stage = 3;
+      // TODO
     }
 
-    
+    if (stage == 1) {
+      if (brainGroup5Ctr == 0 || brainGroup5Ctr == 11) { // groupFight5 reset
+        brainGroup5Ctr = 1;
+      }
+
+      if (brainGroup5Ctr == 1) {
+        randomGroup = getRandomBrains(5);
+      }
+
+      Brain[] match = groupFight5(randomGroup);
+      Tee tee0 = new Tee(0, match[0]);
+      Tee tee1 = new Tee(1, match[1]);
+      tees = new Tees(tee0, tee1);
+    }
+
+    if (stage == 2) {
+      println("welcome to stage 2!");
+    }
+  }
+
+  void update() {
+    if (roundEndCode == 0) { // Round ended
+      if (roundGapTime > 0) {
+        roundGapTime--;
+      } else if (roundGapTime == 0) {
+        if (brainGroup5Ctr == 10) {
+          selectGroupChampion(randomGroup);
+        }
+
+        if (generation == 1) {
+          if (stage == 1 && round == stageRounds[stage]) {
+            brainGroup5Ctr = 0;
+            randomGroup = null; // Clean randomGroup
+            stage = 2; // Enter stage 2
+            println("going to stage 2...");//test
+          }
+        }
+
+        if (round > 0) round++;
+        if (brainGroup5Ctr >= 1 && brainGroup5Ctr <= 10) brainGroup5Ctr++;
+        //if (brainGroup2Ctr == 1) brainGroup2Ctr++;
 
 
+        initNewRound();
+      }
+    } else if (roundEndCode == -1) { // Training
+      roundFrameCtr++;
+      roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
+      if (roundTimeLeft == 0) {
+        endRound();
+      }
 
-    //test
-    //Tee tee0 = new Tee(0);
-    //Brain b1 = new Brain();
-    //Tee tee1 = new Tee(1, b1);
-    //tees = new Tees(tee0, tee1);
+      // If no fastforward, draw game background
+      if (skip == 0) {
+        background(248); //background(25,25,77);
+        terrain.render();
+      }
+
+      // If game is in progress
+      if (roundEndCode == -1) {
+        //TODO fastforward
+        tees.update();
+      }
+
+      // Show necessary game elements only when no fastforward training
+      if (skip == 0) {
+        tees.render();
+        showRoundInfo();
+        tees.showJoypad();
+        tees.showDebugInfo();
+
+        if (roundEndCode == 0) {
+          showRoundResult();
+        }
+      }
+    } else if (roundEndCode == -2) { // Generation finished.
+      //TODO
+    }
+  }
+
+  // Add group champion to population
+  void selectGroupChampion(Brain[] group) {
+    Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score));
+    population.add(group[4]);
+
+    println(population);//test
+  }
+
+  Brain[] getRandomBrains(int size) {
+    Brain[] group = new Brain[size];
+    for (int i = 0; i < size; i++) {
+      group[i] = new Brain();
+    }
+    return group;
+  }
+
+  void nextGen() {
+    round = 1;
+    generation++;
+
+    initNewRound();
   }
 
   Brain[] groupFight5(Brain[] group) {
     if (group.length != 5) throw new RuntimeException("Invalid group length.");
     if (brainGroup5Ctr < 1 || brainGroup5Ctr > 10) throw new RuntimeException("Invalid round counter.");
-    
+
     Brain[] match = new Brain[2];
     int ctrMod = brainGroup5Ctr % 10;
 
@@ -153,62 +246,6 @@ class Tournament {
     return match;
   }
 
-  void nextGen() {
-    if (generation == 0) {
-      round = 1;
-      generation = 1;
-    }
-
-    initNewRound();
-  }
-
-  void update() {
-
-    if (roundEndCode == 0) { // Round ended
-      if (roundGapTime > 0) {
-        roundGapTime--;
-      } else if (roundGapTime == 0) {
-        if (round > 0) {
-          round++;
-        }
-
-        initNewRound();
-      }
-    } else if (roundEndCode == -1) { // Training
-      roundFrameCtr++;
-      roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
-      if (roundTimeLeft == 0) {
-        endRound();
-      }
-
-      // If no fastforward, draw game background
-      if (skip == 0) {
-        background(248); //background(25,25,77);
-        terrain.render();
-      }
-
-      // If game is in progress
-      if (roundEndCode == -1) {
-        //TODO fastforward
-        tees.update();
-      }
-
-      // Show necessary game elements only when no fastforward training
-      if (skip == 0) {
-        tees.render();
-        showRoundInfo();
-        tees.showJoypad();
-        tees.showDebugInfo();
-
-        if (roundEndCode == 0) {
-          showRoundResult();
-        }
-      }
-    } else if (roundEndCode == -2) { // Generation finished.
-      //TODO
-    }
-  }
-
   // Return teeId if >= 0
   //        -1    if tie
   void selectWinner() {
@@ -270,7 +307,8 @@ class Tournament {
 
   void endRound() {
     selectWinner();
-    tees.calcScore();
+    tees.syncScore();
+    println(Arrays.toString(randomGroup));//test
 
     roundEndCode = 0;
     roundGapTime = maxRoundGapTime;

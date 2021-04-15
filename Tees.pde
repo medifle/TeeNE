@@ -65,6 +65,12 @@ class Tees {
     }
   }
 
+  void syncScore() {
+    for (Tee t : tees) {
+      t.syncScore();
+    }
+  }
+
   boolean isKOEnd() {
     for (Tee t : tees) {
       if (t.HP == 0) {

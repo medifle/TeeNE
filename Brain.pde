@@ -30,4 +30,8 @@ class Brain {
   void setLabel(String label) {
     this.label = label;
   }
+  
+  public String toString() {
+    return label + "_" + score;
+  }
 }
