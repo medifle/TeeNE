@@ -39,8 +39,14 @@ class Tournament {
 
   int skip = 0; // 0 no fastforward training, 1 otherwise
 
+  /* <no-motion detection> */
+  float[][] prevIns;
+  int detectionGap = 60; // Frames
+  /* </no-motion detection> */
+
   Tournament() {
     population = new ArrayList<>();
+    prevIns = new float[tees.getSize()][14];
   }
 
   void initNewRound() {
@@ -49,7 +55,9 @@ class Tournament {
     roundTimeLeft = maxRoundTime;
     roundEndCode = -1;
 
-    if (generation == 1) {
+    if (generation == 0) {
+      tees = new Tees();
+    } else if (generation == 1) {
       if (round == 1) {
         stage = 1;
       }
@@ -73,7 +81,7 @@ class Tournament {
     }
 
     if (stage == 2) {
-      println("welcome to stage 2!");
+      println("welcome to stage 2!");//TODO
     }
   }
 
@@ -119,6 +127,17 @@ class Tournament {
       if (roundEndCode == -1) {
         //TODO fastforward
         tees.update();
+
+        // No-motion detection
+        if (roundFrameCtr % detectionGap == 0 && tees.areBrainControl()) {
+          float[][] ins = prepareIns();
+
+          if (isInsEqual(ins)) {
+            endRound();
+          } else {
+            prevIns = ins;
+          }
+        }
       }
 
       // Show necessary game elements only when no fastforward training
@@ -137,12 +156,36 @@ class Tournament {
     }
   }
 
+  // Prepare two tees input data
+  float[][] prepareIns() {
+    float[] in0 = tees.get(0).prepareInput();
+    float[] in1 = tees.get(1).prepareInput();
+    float[][] ins = new float[2][14];
+    ins[0] = in0;
+    ins[1] = in1;
+
+    return ins;
+  }
+
+  // Compare two tees input data
+  // true if they are deep equal, false otherwise
+  boolean isInsEqual(float[][] ins) {
+    for (int i = 0; i < tees.getSize(); i++) {
+      for (int j = 0; j < 14; j++) {
+        if (prevIns[i][j] != ins[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   // Add group champion to population
   void selectGroupChampion(Brain[] group) {
     Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score));
     population.add(group[4]);
 
-    println(population);//test
+    println("Population: " + population);//test
   }
 
   Brain[] getRandomBrains(int size) {
@@ -294,7 +337,7 @@ class Tournament {
     }
 
     // Show K.O.
-    if (tees.isKOEnd()) {
+    if (tees.areKOEnd()) {
       fill(60);
       textFont(FontKO);
       textSize(90);

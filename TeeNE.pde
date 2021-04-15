@@ -1,7 +1,7 @@
 //float unit = 1; // length unit
 
 boolean pause = false;
-boolean debug = true;
+boolean debug = false;
 
 Terrain terrain;
 Tee tee1, tee2;

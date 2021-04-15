@@ -71,13 +71,22 @@ class Tees {
     }
   }
 
-  boolean isKOEnd() {
+  boolean areKOEnd() {
     for (Tee t : tees) {
       if (t.HP == 0) {
         return true;
       }
     }
     return false;
+  }
+
+  boolean areBrainControl() {
+    for (Tee t : tees) {
+      if (!t.brainControl) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void showJoypad() {
@@ -90,5 +99,9 @@ class Tees {
     for (Tee t : tees) {
       t.showDebugInfo();
     }
+  }
+  
+  int getSize() {
+    return tees.length;
   }
 }
