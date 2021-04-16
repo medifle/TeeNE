@@ -293,16 +293,17 @@ class Tee {
   void calcScore() {
     score = (maxHP - tees.getEnemyHP(teeId)) * 10 - (maxHP - HP) * 5;
     if (tournament.winner == teeId) {
-      score += 100 + tournament.roundTimeLeft;
+      score += 100;
+      if (tees.getEnemyHP(teeId) == 0) score += tournament.roundTimeLeft;
     } else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
-      score -= 100 + tournament.roundTimeLeft;
+      score -= 100;
+      if (HP == 0) score -= tournament.roundTimeLeft;
     }
   }
 
   void syncScore() {
     calcScore();
 
-    // Update brain score if brainControl is true
     if (brainControl) {
       brain.syncScore(score);
     }

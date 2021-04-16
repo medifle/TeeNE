@@ -22,6 +22,7 @@ class Tournament {
   /* <evaluation stage> */
   ArrayDeque<Brain> evalDeque;
   Brain champion;
+  int evalChampionRound = 494; // 40*10+8*10+4*2+2*2+1*2
   HashMap<String, Integer> benchmarkLog;
   /* </evaluation stage> */
 
@@ -87,51 +88,74 @@ class Tournament {
     }
 
     if (stage == 2) {
-      //if (champion == null) {
-      //  if (fightGroup == null) {
-      //    println("stage 2 starts.");
-      //    if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque should be empty at the start");
-      //  }
+      if (champion == null) {
+        if (brainGroup5Ctr == 0 && brainGroup2Ctr == 0) {
+          println("stage 2 starts.");//test
+          if (!evalDeque.isEmpty()) {
+            throw new RuntimeException("evalDeque error: should be empty");
+          }
 
+          copyBrainsToDeque(population, evalDeque);
+          brainGroup5Ctr = 1;
+        }
 
-      //  copyBrainsToDeque(population, evalDeque);
-      //  String frontBrainLabel = evalDeque.peekFirst().getLabel();
-      //  switch (frontBrainLabel) {
-      //  case "initial":
-      //    brainGroup5Ctr = 1;
-      //    break;
-      //  case "eval40":
-      //    brainGroup5Ctr = 1;
-      //    break;
-      //  case "eval8":
-      //    brainGroup2Ctr = 1;
-      //    break;
-      //  case "eval4":
-      //    brainGroup2Ctr = 1;
-      //    break;
-      //  case "eval2":
-      //    brainGroup2Ctr = 1;
-      //    break;
-      //  }
+        if (brainGroup5Ctr == 11) brainGroup5Ctr = 1;
+        if (brainGroup2Ctr == 3) brainGroup2Ctr = 1;
 
-      //  // pop 5 or 2 brains
-      //  Brain[] match = null;
-      //  if (brainGroup5Ctr == 1) {
-      //    fightGroup = popBrains(evalDeque, 5);
-      //    match = groupFight5(fightGroup);
-      //  } else if (brainGroup2Ctr == 1) {
-      //    fightGroup = popBrains(evalDeque, 2);
-      //    match = groupFight2(fightGroup);
-      //  } else {
-      //    throw new RuntimeException("Should not reach here.");
-      //  }
+        if (brainGroup5Ctr == 1 || brainGroup2Ctr == 1) {
+          String frontBrainLabel = evalDeque.peekFirst().getLabel();
+          switch (frontBrainLabel) {
+          case "init":
+            brainGroup5Ctr = 1;
+            brainGroup2Ctr = 0;
+            break;
+          case "eval40":
+            brainGroup5Ctr = 1;
+            brainGroup2Ctr = 0;
+            break;
+          case "eval8":
+            brainGroup5Ctr = 0;
+            brainGroup2Ctr = 1;
+            break;
+          case "eval4":
+            brainGroup5Ctr = 0;
+            brainGroup2Ctr = 1;
+            break;
+          case "eval2":
+            brainGroup5Ctr = 0;
+            brainGroup2Ctr = 1;
+            break;
+          default:
+            throw new RuntimeException("Label error: should not reach here.");
+          }
+        }
 
-      //  Tee tee0 = new Tee(0, match[0]);
-      //  Tee tee1 = new Tee(1, match[1]);
-      //  tees = new Tees(tee0, tee1);
-      //} else {
-      //  //TODO benchmark
-      //}
+        // Pop 5 or 2 brains
+        if (brainGroup5Ctr == 1) {
+          fightGroup = popBrains(evalDeque, 5);
+          println("pop5 " + Arrays.toString(fightGroup));//test
+        } else if (brainGroup2Ctr == 1) {
+          fightGroup = popBrains(evalDeque, 2);
+          println("pop2 " + Arrays.toString(fightGroup));//test
+        }
+
+        // Only one counter > 0 here
+        Brain[] match = null;
+        if (brainGroup5Ctr > 0) {
+          match = groupFight5(fightGroup);
+        } else if (brainGroup2Ctr > 0) {
+          match = groupFight2(fightGroup);
+        } else {
+          throw new RuntimeException("Match error: should not reach here.");
+        }
+
+        Tee tee0 = new Tee(0, match[0]);
+        Tee tee1 = new Tee(1, match[1]);
+        tees = new Tees(tee0, tee1);
+      } else {
+        //TODO benchmark
+        // Remove champion from population, find by name?
+      }
     }
   }
 
@@ -141,19 +165,39 @@ class Tournament {
         roundGapTime--;
       } else if (roundGapTime == 0) {
         if (brainGroup5Ctr == 10) {
-          promoteGroupChampion(fightGroup, population);
+          if (stage == 1) promoteGroupChampion(fightGroup, population);
+          if (stage == 2) promoteGroupChampion(fightGroup, evalDeque);
         }
         if (brainGroup2Ctr == 2) {
-          promoteGroupChampion(fightGroup, evalDeque);
+          if (stage == 2) promoteGroupChampion(fightGroup, evalDeque);
         }
 
         if (generation == 1) {
-          if (stage == 1 && round == stageRound[stage]) {
+          if (stage == 2) {
+            if (round == (stageRound[1] + evalChampionRound)) {
+              if (evalDeque.peekFirst().getLabel() != "eval1") {
+                throw new RuntimeException("Champion error.");
+              }
+
+              clearPopulationScore();
+              println("population " + population);//test
+              champion = evalDeque.pop();
+            }
+
+            if (round == (stageRound[1] + stageRound[2])) {
+              //TODO finish gen?
+            }
+          }
+
+          if (stage == 1 && round == stageRound[1]) { // Finish stage 1
             // Reset
             brainGroup5Ctr = 0;
             fightGroup = null;
+            clearPopulationScore();
+
 
             stage = 2; // Enter stage 2
+            println("population " + population);//test
             println("going to stage 2...");//test
           }
         }
@@ -177,7 +221,7 @@ class Tournament {
 
         if (roundEndCode == -1) {
           tees.update();
-          //detectNoMotion();
+          detectNoMotion();
         }
 
         if (skip == 0) break;
@@ -187,7 +231,7 @@ class Tournament {
       terrain.render();
       showTrainingStatus();
 
-      // Show necessary game elements only when no fastforward training
+      // Show necessary game elements only when training is at normal speed
       if (skip == 0) {
         tees.render();
         showRoundInfo();
@@ -236,13 +280,51 @@ class Tournament {
     return true;
   }
 
-  // Add group champion to population
+  // Push the group champion to the destination collection
   void promoteGroupChampion(Brain[] group, Collection<Brain> destination) {
     Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score));
-    destination.add(group[group.length - 1]);
+    Brain top = group[group.length - 1];
+
+    top.clearScore();
+
+    // Give the top a name by natural order
+    if (stage == 1) {
+      String name = "#" + (population.size() + 1);
+      top.setName(name);
+    }
+
+    // Update label for the promotion
+    if (stage == 2) {
+      String oldLabel = top.getLabel();
+      switch (oldLabel) {
+      case "init":
+        top.setLabel("eval40");
+        break;
+      case "eval40":
+        top.setLabel("eval8");
+        break;
+      case "eval8":
+        top.setLabel("eval4");
+        break;
+      case "eval4":
+        top.setLabel("eval2");
+        break;
+      case "eval2":
+        top.setLabel("eval1");
+        break;
+      }
+    }
+
+    destination.add(top);
 
 
     if (evalDeque == destination) println("evalDeque: " + evalDeque + "\n");//test
+  }
+
+  void clearPopulationScore() {
+    for (Brain b : population) {
+      b.clearScore();
+    }
   }
 
   Brain[] getRandomBrains(int size) {
@@ -278,7 +360,9 @@ class Tournament {
 
   Brain[] groupFight5(Brain[] group) {
     if (group.length != 5) throw new RuntimeException("Invalid group length.");
-    if (brainGroup5Ctr < 1 || brainGroup5Ctr > 10) throw new RuntimeException("Invalid round counter.");
+    if (brainGroup5Ctr < 1 || brainGroup5Ctr > 10) {
+      throw new RuntimeException("Invalid round counter.");
+    }
 
     Brain[] match = new Brain[2];
     int ctrMod = brainGroup5Ctr % 10;
@@ -341,7 +425,9 @@ class Tournament {
 
   Brain[] groupFight2(Brain[] group) {
     if (group.length != 2) throw new RuntimeException("Invalid group length.");
-    if (brainGroup2Ctr < 1 || brainGroup2Ctr > 2) throw new RuntimeException("Invalid round counter.");
+    if (brainGroup2Ctr < 1 || brainGroup2Ctr > 2) {
+      throw new RuntimeException("Invalid round counter.");
+    }
 
     Brain[] match = new Brain[2];
     int ctrMod = brainGroup2Ctr % 2;
@@ -438,7 +524,7 @@ class Tournament {
   void endRound() {
     selectWinner();
     tees.syncScore();
-    //println(Arrays.toString(fightGroup));//test
+    println("endRound " + Arrays.toString(fightGroup));//test
 
     roundEndCode = 0;
     roundGapTime = (skip == 0) ? maxRoundGapTime : 0;
