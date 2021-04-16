@@ -7,9 +7,14 @@ class Tournament {
   // 3 Selection & Reproduction
   int stage = 0;
 
-  int[] stageRound = {0, 2000, 894, 360};
+  int[] stageRound = {0, 2000, 892, 360};
   int round = 0;
   int generation = 0; // 0 free play mode
+
+  // -2 the current generation finished.
+  // -1 ready to start the next generation
+  // 0 the current round ended
+  int roundEndCode = -2;
 
   ArrayList<Brain> population;
 
@@ -23,7 +28,8 @@ class Tournament {
   ArrayDeque<Brain> evalDeque;
   Brain champion;
   int evalChampionRound = 494; // 40*10+8*10+4*2+2*2+1*2
-  HashMap<String, Integer> benchmarkLog;
+  HashMap<String, int[]> benchmarkLog;
+  String benchmarkHyphen = "-";
   /* </evaluation stage> */
 
   // -1 tie
@@ -33,11 +39,6 @@ class Tournament {
 
   int maxRoundTime = 60;
   int roundTimeLeft = maxRoundTime;
-
-  // -2 the current generation finished.
-  // -1 ready to start the next generation
-  // 0 the current round ended
-  int roundEndCode = -2;
 
   int maxRoundGapTime = 120; // 120 frames, 2 seconds
   int roundGapTime = maxRoundGapTime;
@@ -71,6 +72,8 @@ class Tournament {
       }
     } else if (generation > 1) {
       // TODO
+      stage = 3;
+      throw new RuntimeException("in construction");
     }
 
     if (stage == 1) {
@@ -90,11 +93,9 @@ class Tournament {
 
     if (stage == 2) {
       if (champion == null) {
+        // Stage 2.1 Get champion
         if (brainGroup5Ctr == 0 && brainGroup2Ctr == 0) {
-          println("stage 2 starts.");//test
-          if (!evalDeque.isEmpty()) {
-            throw new RuntimeException("evalDeque error: should be empty");
-          }
+          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty");
 
           copyBrainsToDeque(population, evalDeque);
           brainGroup5Ctr = 1;
@@ -154,8 +155,34 @@ class Tournament {
         Tee tee1 = new Tee(1, match[1]);
         tees = new Tees(tee0, tee1);
       } else {
-        //TODO benchmark
-        // Remove champion from population, find by name?
+        // Stage 2.2 Benchmark
+        if (brainGroup2Ctr == 0) {
+          println("start benchmark.");//test
+
+          boolean isRemoveSucess = population.remove(champion);
+          if (!isRemoveSucess || population.size() != 199) {
+            throw new RuntimeException("Remove error.");
+          }
+
+          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty.");
+          if (!benchmarkLog.isEmpty()) throw new RuntimeException("benchmarkLog error: not empty.");
+
+          copyBrainsToDeque(population, evalDeque);
+          brainGroup2Ctr = 1;
+        }
+
+        if (brainGroup2Ctr == 3) brainGroup2Ctr = 1;
+
+        if (brainGroup2Ctr == 1) {
+          Brain popedBrain = evalDeque.pop();
+          fightGroup = new Brain[]{champion, popedBrain};
+          //println("\nbenchgroup " + Arrays.toString(fightGroup));//test
+        }
+
+        Brain[] match = groupFight2(fightGroup);
+        Tee tee0 = new Tee(0, match[0]);
+        Tee tee1 = new Tee(1, match[1]);
+        tees = new Tees(tee0, tee1);
       }
     }
   }
@@ -170,32 +197,54 @@ class Tournament {
           if (stage == 2) promoteGroupChampion(fightGroup, evalDeque);
         }
         if (brainGroup2Ctr == 2) {
-          if (stage == 2) promoteGroupChampion(fightGroup, evalDeque);
+          if (stage == 2) {
+            if (champion == null) {
+              promoteGroupChampion(fightGroup, evalDeque);
+            } else {
+              logBenchmark();
+              champion.clearScore();
+            }
+          }
         }
 
         if (generation == 1) {
           if (stage == 2) {
-            if (round == (stageRound[1] + evalChampionRound)) {
+            if (round == (stageRound[1] + evalChampionRound)) { // Stage 2.1 ended
               if (evalDeque.peekFirst().getLabel() != "eval1") {
                 throw new RuntimeException("Champion error.");
               }
 
+              brainGroup2Ctr = 0;
+              fightGroup = null;
               clearPopulationScore();
-              println("population " + population);//test
               champion = evalDeque.pop();
-            }
+              println("population " + population + "\n");//test
+            } else if (round == (stageRound[1] + stageRound[2])) { // Stage 2.2 ended
+              brainGroup2Ctr = 0;
+              fightGroup = null;
+              evalDeque.clear();
 
-            if (round == (stageRound[1] + stageRound[2])) {
-              //TODO finish gen?
+              sortPopulation();
+              insertChampion();
+              champion = null;
+              benchmarkLog.clear();
+
+              println("population " + population + "\n");//test
+              println("champion " + champion);//test
+              println("good, one more step.");//test
+
+              //TODO CE
+              stage = 0;
+              round = 0;
+              roundEndCode = -2;
             }
           }
 
-          if (stage == 1 && round == stageRound[1]) { // Finish stage 1
+          if (stage == 1 && round == stageRound[1]) { // Stage 1 ended
             // Reset
             brainGroup5Ctr = 0;
             fightGroup = null;
             clearPopulationScore();
-
 
             stage = 2; // Enter stage 2
             println("population " + population);//test
@@ -207,8 +256,7 @@ class Tournament {
         if (brainGroup5Ctr >= 1 && brainGroup5Ctr <= 10) brainGroup5Ctr++;
         if (brainGroup2Ctr >= 1 && brainGroup2Ctr <= 2) brainGroup2Ctr++;
 
-
-        initNewRound();
+        if (roundEndCode != -2) initNewRound();
       }
     } else if (roundEndCode == -1) { // Training
       // If game is in progress, do training
@@ -246,7 +294,8 @@ class Tournament {
         if (roundEndCode == 0) showRoundResult();
       }
     } else if (roundEndCode == -2) { // Generation finished.
-      //TODO
+      //TODO UI
+      background(25, 25, 77);
     }
   }
 
@@ -288,8 +337,8 @@ class Tournament {
 
   // Push the group champion to the destination collection
   void promoteGroupChampion(Brain[] group, Collection<Brain> destination) {
-    Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score));
-    Brain top = group[group.length - 1];
+    Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score).reversed());
+    Brain top = group[0];
 
     top.clearScore();
 
@@ -356,6 +405,29 @@ class Tournament {
     deque.addAll(popul);
   }
 
+  void logBenchmark() {
+    String hkey = fightGroup[0].getName() + benchmarkHyphen + fightGroup[1].getName(); // Uniqueness guaranteed
+    int[] scores = new int[]{fightGroup[0].getScore(), fightGroup[1].getScore()};
+    benchmarkLog.put(hkey, scores);
+  }
+
+  void sortPopulation() {
+    Collections.sort(population, Comparator.<Brain>comparingInt(a -> a.score).reversed());
+  }
+
+  // population should be sorted in decreasing order by score
+  void insertChampion() {
+    for (int i = 0; i < population.size(); i++) {
+      String hkey = champion.getName() + benchmarkHyphen + population.get(i).getName();
+      int[] scores = benchmarkLog.get(hkey);
+      println("i " + i + ". " + "scores " + Arrays.toString(scores));//test
+
+      if (scores[0] >= scores[1]) {
+        population.add(i, champion);
+        break;
+      }
+    }
+  }
 
   void nextGen() {
     round = 1;
@@ -440,12 +512,12 @@ class Tournament {
 
     switch (ctrMod) {
     case 1:
-      println("groupFight2: case 1");//test
+      //println("groupFight2: case 1");//test
       match[0] = group[0];
       match[1] = group[1];
       break;
     case 0:
-      println("groupFight2: case 0");//test
+      //println("groupFight2: case 0");//test
       match[0] = group[1];
       match[1] = group[0];
       break;
@@ -519,10 +591,16 @@ class Tournament {
     textFont(FontSansSerif);
     textSize(12);
 
-    text("Gen " + generation, 10, terrain.posY + 20);
-    text("Stage " + stage, 10, terrain.posY + 35);
-    text("Round " + round, 10, terrain.posY + 50);
-    text("Stage Round " + stageRound[stage], 10, terrain.posY + 65);
+    text("Gen " + generation, 10, terrain.posY + 25);
+    text("Stage " + stage, 10, terrain.posY + 40);
+    text("Round " + round, 10, terrain.posY + 55);
+    text("Stage Round " + stageRound[stage], 10, terrain.posY + 70);
+
+    if (skip == 0) {
+      tees.calcScore();
+      text("score " + tees.get(0).score, 10, terrain.posY + 125);
+      text("score " + tees.get(1).score, 700, terrain.posY + 125);
+    }
 
     stroke(20); // Restore stroke
   }

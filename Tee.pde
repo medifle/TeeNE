@@ -131,7 +131,7 @@ class Tee {
       
       // Training performance bottleneck, obvious when brainInterval is 1
       // This basic matrix implementation of NN has unnecessary costs
-      // Total operations using this matrix: O(6664)
+      // Total operations using this matrix: O(1568)
       // Total operations using two for loop:
       // O(284) = 14*14 + 14(bias) + 14(activation function) + 14*4 + 4(bias)
       float[] out = nn.feedforward(in);

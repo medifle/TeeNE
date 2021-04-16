@@ -21,6 +21,10 @@ class Brain {
     return nn;
   }
 
+  int getScore() {
+    return this.score;
+  }
+
   void syncScore(int score) {
     this.score += score; // Accumulate score
   }
@@ -32,7 +36,7 @@ class Brain {
   void setName(String name) {
     this.name = name;
   }
-  
+
   String getName() {
     return this.name;
   }
