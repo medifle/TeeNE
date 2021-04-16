@@ -43,6 +43,7 @@ class Tournament {
   int roundGapTime = maxRoundGapTime;
 
   int skip = 0; // 0 no fastforward training, 1 otherwise
+  boolean skipOne = false; // true skip only 1 round
 
   /* <no-motion detection> */
   float[][] prevIns;
@@ -225,6 +226,11 @@ class Tournament {
         }
 
         if (skip == 0) break;
+      }
+
+      if (skipOne) {
+        skip = 0;
+        skipOne = false;
       }
 
       background(248);

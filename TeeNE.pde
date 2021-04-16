@@ -74,6 +74,10 @@ void gameKeymap(char asciiKey) {
     // Fastforward training
     tournament.skip ^= 1;
     break;
+  case 's':
+    tournament.skip = 1;
+    tournament.skipOne = true;
+    break;
   case 'n':
     if (tournament.roundEndCode == -2) {
       tournament.nextGen();
