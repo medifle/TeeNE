@@ -23,12 +23,12 @@ class Brain {
     this.score += score;
   }
   
-  void clearStage() {
-    this.score = 0;
-  }
-  
   void setLabel(String label) {
     this.label = label;
+  }
+  
+  String getLabel() {
+    return this.label;
   }
   
   public String toString() {

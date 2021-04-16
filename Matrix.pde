@@ -56,6 +56,7 @@ class Matrix {
     return this.map((e, i, j) -> e + B.data[i][j]);
   }
 
+  // Slow implementation
   Matrix multiply(Matrix B) {
     if (this.cols != B.rows) throw new RuntimeException("Invalid matrix dimensions.");
 

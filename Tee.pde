@@ -11,6 +11,11 @@ class Tee {
   int score = 0;
 
   Brain brain;
+  
+  // 1. Limit the action rate
+  // 2. To improve training performance
+  int brainInterval = 6;
+  
   boolean brainControl = false;
   boolean pressLeft = false;
   boolean pressRight = false;
@@ -91,7 +96,8 @@ class Tee {
 
   void update() {
     updateEnemyData();
-    think();
+    
+    if (tournament.roundFrameCtr % brainInterval == 0) think();
 
     // calculate the current frame based on think() result
     calcInjury();
@@ -122,6 +128,12 @@ class Tee {
     if (brainControl) {
       float[] in = prepareInput();
       NeuralNetwork nn = brain.getNN();
+      
+      // Training performance bottleneck, obvious when brainInterval is 1
+      // This basic matrix implementation of NN has unnecessary costs
+      // Total operations using this matrix: O(6664)
+      // Total operations using two for loop:
+      // O(284) = 14*14 + 14(bias) + 14(activation function) + 14*4 + 4(bias)
       float[] out = nn.feedforward(in);
 
       // Convert output value to game control intruction
