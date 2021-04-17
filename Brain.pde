@@ -1,7 +1,9 @@
 class Brain {
-  int score = 0;
-
   String name = "#0";
+  
+  NeuralNetwork nn;
+  
+  int score = 0;
 
   // init    Initialization stage
   // eval40  top 40 in Evaluation stage, 200 -> 40
@@ -10,8 +12,6 @@ class Brain {
   // eval2   top 2 in Evaluation stage, 4 -> 2
   // eval1   top 1 in Evaluation stage, 2 -> 1
   String label = "init";
-
-  NeuralNetwork nn;
 
   Brain() {
     this.nn = new NeuralNetwork(14, 14, 4);
@@ -52,12 +52,16 @@ class Brain {
     return this.name;
   }
 
+  String getLabel() {
+    return this.label;
+  }
+  
   void setLabel(String label) {
     this.label = label;
   }
 
-  String getLabel() {
-    return this.label;
+  void clearLabel() {
+    this.label = "init";
   }
 
   public String toString() {

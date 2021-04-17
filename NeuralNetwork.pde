@@ -61,6 +61,12 @@ class NeuralNetwork {
   }
 
   // For neuroevolution
+  //float[] toArray() {
+    
+  //}
+  
+  //TODO fromArray
+  
   NeuralNetwork copy() {
     return new NeuralNetwork(this);
   }

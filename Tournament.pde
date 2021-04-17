@@ -240,6 +240,8 @@ class Tournament {
           stage = 0;
           round = 0;
           roundEndCode = -2;
+          
+          println("population " + population + "\n");//test
         }
 
         if (generation == 1) {
@@ -264,6 +266,7 @@ class Tournament {
               champion = null;
               benchmarkLog.clear();
               clearPopulationScore();
+              clearPopulationLabel();
               
               println("population " + population + "\n");//test
               println("champion " + champion);//test
@@ -440,6 +443,12 @@ class Tournament {
   void clearPopulationScore() {
     for (Brain b : population) {
       b.clearScore();
+    }
+  }
+  
+  void clearPopulationLabel() {
+    for (Brain b : population) {
+      b.clearLabel();
     }
   }
 
