@@ -1,6 +1,9 @@
 class Tees {
   Tee[] tees = new Tee[2];
-  int humanTeeId = 0; // 0 is the left, 1 is the right. Only effective when the tee brainControl is false
+
+  // 0 left, 1 right.
+  // Only effective when the tee brainControl is false
+  int humanTeeId = 0;
 
   Tees() {
     tees[0] = new Tee(0);
@@ -10,6 +13,10 @@ class Tees {
   Tees(Tee t1, Tee t2) {
     tees[0] = t1;
     tees[1] = t2;
+  }
+
+  void useBrain(int teeId, Brain brain) {
+    get(teeId).useBrain(brain);
   }
 
   Tee get(int id) {
@@ -100,7 +107,7 @@ class Tees {
       t.showDebugInfo();
     }
   }
-  
+
   int getSize() {
     return tees.length;
   }

@@ -80,10 +80,7 @@ void gameKeymap(char asciiKey) {
   case 'g': // Continuous evolution
     tournament.autoNextGen = !tournament.autoNextGen;
     break;
-  case 'f':
-    //TODO
-    break;
-  case 'n': // Enter next generation
+  case 'n': // Start next generation
     if (tournament.roundEndCode == -2) {
       tournament.nextGen();
     }
@@ -95,6 +92,20 @@ void gameKeymap(char asciiKey) {
       noLoop();
     }
     pause = !pause;
+    break;
+  case 'f': // Fight mode: human vs. AI
+    if (tournament.roundEndCode == -2 && tournament.generation > 0) {
+      tournament.fightMode();
+    }
+    break;
+  case 'e': // Save population
+    //TODO
+    if (tournament.roundEndCode == -2 && tournament.generation > 0) {
+      //
+    }
+    break;
+  case 'l': // Load population
+    //TODO
     break;
   }
 }

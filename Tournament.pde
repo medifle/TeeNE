@@ -1,18 +1,23 @@
 class Tournament {
   int roundFrameCtr = 0; // Frame count per round
 
-  // 0 Not in training
-  // 1 Initialization
-  // 2 Evaluation
-  // 3 Selection & Reproduction
+  // 0  menu, free play mode
+  //
+  // <training>
+  // 1  Initialization
+  // 2  Evaluation
+  // 3  Selection & Reproduction
+  // </training>
+  //
+  // 4  Fight mode
   int stage = 0;
 
-  int[] stageRound = {0, 2000, 892, 360};
-  
+  int[] stageRound = {0, 2000, 892, 360, 2};
+
   int round = 0;
   int generation = 0; // 0 free play mode
 
-  // -2 the current generation finished.
+  // -2 menu, the current generation finished
   // -1 ready to start the next generation
   // 0 the current round ended
   int roundEndCode = -2;
@@ -52,6 +57,10 @@ class Tournament {
   int detectionGap = 60; // Frames
   /* </no-motion detection> */
 
+  // Fight mode
+  // A deepcopy of the population champion
+  Brain enemyBrain;
+
   Tournament() {
     population = new ArrayList<>();
     prevIns = new float[tees.getSize()][14];
@@ -85,8 +94,7 @@ class Tournament {
     }
 
     if (stage == 2) {
-      if (champion == null) {
-        // Stage 2.1 Get champion
+      if (champion == null) { // Stage 2.1 Get champion
         if (brainGroup5Ctr == 0 && brainGroup2Ctr == 0) {
           if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty");
 
@@ -121,7 +129,7 @@ class Tournament {
             brainGroup2Ctr = 1;
             break;
           default:
-            throw new RuntimeException("Label error: should not reach here.");
+            throw new RuntimeException("Label error.");
           }
         }
 
@@ -147,8 +155,7 @@ class Tournament {
         Tee tee0 = new Tee(0, match[0]);
         Tee tee1 = new Tee(1, match[1]);
         tees = new Tees(tee0, tee1);
-      } else {
-        // Stage 2.2 Benchmark
+      } else {                // Stage 2.2 Benchmark
         if (brainGroup2Ctr == 0) {
           println("start benchmark.");//test
 
@@ -178,10 +185,30 @@ class Tournament {
         tees = new Tees(tee0, tee1);
       }
     }
-    
+
     if (stage == 3) {
       //TODO
       println("stage 3!");
+    }
+
+    if (stage == 4) {
+      if (population.isEmpty()) throw new RuntimeException("population empty");
+
+      enemyBrain = population.get(0).copy();
+      tees = new Tees();
+
+      int ctrMod = round % 2;
+      switch (ctrMod) {
+      case 1:
+        tees.useBrain(1, enemyBrain);
+        break;
+      case 0:
+        tees.useBrain(0, enemyBrain);
+        tees.switchPlayer();
+        break;
+      default:
+        throw new RuntimeException("ctrMod error.");
+      }
     }
   }
 
@@ -191,8 +218,11 @@ class Tournament {
         roundGapTime--;
       } else if (roundGapTime == 0) {
         if (brainGroup5Ctr == 10) {
-          if (stage == 1) promoteGroupChampion(fightGroup, population);
-          if (stage == 2) promoteGroupChampion(fightGroup, evalDeque);
+          if (stage == 1) {
+            promoteGroupChampion(fightGroup, population);
+          } else if (stage == 2) {
+            promoteGroupChampion(fightGroup, evalDeque);
+          }
         }
         if (brainGroup2Ctr == 2) {
           if (stage == 2) {
@@ -203,6 +233,13 @@ class Tournament {
               champion.clearScore();
             }
           }
+        }
+
+        if (stage == 4 && round == 2) { // Back to menu
+          enemyBrain = null;
+          stage = 0;
+          round = 0;
+          roundEndCode = -2;
         }
 
         if (generation == 1) {
@@ -226,7 +263,8 @@ class Tournament {
               insertChampion();
               champion = null;
               benchmarkLog.clear();
-
+              clearPopulationScore();
+              
               println("population " + population + "\n");//test
               println("champion " + champion);//test
               println("good, one more step.");//test
@@ -293,7 +331,7 @@ class Tournament {
         if (debug) tees.showDebugInfo();
         if (roundEndCode == 0) showRoundResult();
       }
-    } else if (roundEndCode == -2) { // Generation finished.
+    } else if (roundEndCode == -2) { // Generation finished, back to menu
       //TODO UI
       background(25, 25, 77);
     }
@@ -308,6 +346,14 @@ class Tournament {
     } else if (generation > 1) {
       stage = 3;
     }
+
+    initNewRound();
+  }
+
+  void fightMode() {
+    round = 1;
+    stage = 4;
+    skip = false;
 
     initNewRound();
   }
@@ -380,6 +426,8 @@ class Tournament {
       case "eval2":
         top.setLabel("eval1");
         break;
+      default:
+        throw new RuntimeException("Label error.");
       }
     }
 
@@ -450,7 +498,6 @@ class Tournament {
 
     Brain[] match = new Brain[2];
     int ctrMod = brainGroup5Ctr % 10;
-
     switch (ctrMod) {
     case 1:
       //println("groupFight5: case 1");//test
@@ -502,6 +549,8 @@ class Tournament {
       match[0] = group[4];
       match[1] = group[1];
       break;
+    default:
+      throw new RuntimeException("ctrMod error.");
     }
 
     return match;
@@ -515,7 +564,6 @@ class Tournament {
 
     Brain[] match = new Brain[2];
     int ctrMod = brainGroup2Ctr % 2;
-
     switch (ctrMod) {
     case 1:
       //println("groupFight2: case 1");//test
@@ -527,6 +575,8 @@ class Tournament {
       match[0] = group[1];
       match[1] = group[0];
       break;
+    default:
+      throw new RuntimeException("ctrMod error.");
     }
 
     return match;
@@ -595,13 +645,15 @@ class Tournament {
     fill(20);
     noStroke();
     textFont(FontSansSerif);
-    textSize(12);
+    textSize(14);
 
-    text("Gen " + generation, 10, terrain.posY + 25);
-    text("Stage " + stage, 10, terrain.posY + 40);
-    text("Round " + round, 10, terrain.posY + 55);
-    text("Stage Round " + stageRound[stage], 10, terrain.posY + 70);
-    text("Auto NextGen " + autoNextGen, 10, terrain.posY + 85);
+    int baseY = 25;
+    int gapY = 17;
+    text("Gen " + generation, 10, terrain.posY + baseY);
+    text("Stage " + stage, 10, terrain.posY + baseY + 1*gapY);
+    text("Round " + round, 10, terrain.posY + baseY + 2*gapY);
+    text("Stage Round " + stageRound[stage], 10, terrain.posY + baseY + 3*gapY);
+    text("Auto NextGen " + autoNextGen, 10, terrain.posY + baseY + 4*gapY);
 
     if (!skip) {
       tees.calcScore();
