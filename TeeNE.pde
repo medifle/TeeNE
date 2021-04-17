@@ -66,24 +66,29 @@ void teeControlKeymap(int k, boolean decision) {
 
 void gameKeymap(char asciiKey) {
   switch(asciiKey) {
-  case 'q':
+  case 'q': // Switch player
     tees.getHumanPlayer().cancelPressStatus();
     tees.switchPlayer();
     break;
-  case 'v':
-    // Fastforward training
-    tournament.skip ^= 1;
+  case 'v': // Fastforward training
+    tournament.skip = !tournament.skip;
     break;
-  case 's':
-    tournament.skip = 1;
+  case 's': // Fastforward one round
+    tournament.skip = true;
     tournament.skipOne = true;
     break;
-  case 'n':
+  case 'g': // Continuous evolution
+    tournament.autoNextGen = !tournament.autoNextGen;
+    break;
+  case 'f':
+    //TODO
+    break;
+  case 'n': // Enter next generation
     if (tournament.roundEndCode == -2) {
       tournament.nextGen();
     }
     break;
-  case 'p':
+  case 'p': // Pause
     if (pause) {
       loop();
     } else {

@@ -8,6 +8,7 @@ class Tournament {
   int stage = 0;
 
   int[] stageRound = {0, 2000, 892, 360};
+  
   int round = 0;
   int generation = 0; // 0 free play mode
 
@@ -39,12 +40,12 @@ class Tournament {
 
   int maxRoundTime = 60;
   int roundTimeLeft = maxRoundTime;
-
   int maxRoundGapTime = 120; // 120 frames, 2 seconds
   int roundGapTime = maxRoundGapTime;
 
-  int skip = 0; // 0 no fastforward training, 1 otherwise
-  boolean skipOne = false; // true skip only 1 round
+  boolean skip = false; // true fastforward training
+  boolean skipOne = false; // true fastforward only 1 round
+  boolean autoNextGen = false; // true continuous evolution
 
   /* <no-motion detection> */
   float[][] prevIns;
@@ -64,16 +65,8 @@ class Tournament {
     roundTimeLeft = maxRoundTime;
     roundEndCode = -1;
 
-    if (generation == 0) {
+    if (stage == 0) {
       tees = new Tees();
-    } else if (generation == 1) {
-      if (round == 1) {
-        stage = 1;
-      }
-    } else if (generation > 1) {
-      // TODO
-      stage = 3;
-      throw new RuntimeException("in construction");
     }
 
     if (stage == 1) {
@@ -185,6 +178,11 @@ class Tournament {
         tees = new Tees(tee0, tee1);
       }
     }
+    
+    if (stage == 3) {
+      //TODO
+      println("stage 3!");
+    }
   }
 
   void update() {
@@ -233,10 +231,13 @@ class Tournament {
               println("champion " + champion);//test
               println("good, one more step.");//test
 
-              //TODO CE
-              stage = 0;
-              round = 0;
-              roundEndCode = -2;
+              if (autoNextGen) { // Enter next generation
+                nextGen();
+              } else {           // Back to menu
+                stage = 0;
+                round = 0;
+                roundEndCode = -2;
+              }
             }
           }
 
@@ -260,7 +261,6 @@ class Tournament {
       }
     } else if (roundEndCode == -1) { // Training
       // If game is in progress, do training
-      // fastforward training if skip != 0
       while (roundEndCode == -1) {
         roundFrameCtr++;
         roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
@@ -273,11 +273,11 @@ class Tournament {
           detectNoMotion();
         }
 
-        if (skip == 0) break;
+        if (!skip) break;
       }
 
       if (skipOne) {
-        skip = 0;
+        skip = false;
         skipOne = false;
       }
 
@@ -286,7 +286,7 @@ class Tournament {
       showTrainingStatus();
 
       // Show necessary game elements only when training is at normal speed
-      if (skip == 0) {
+      if (!skip) {
         tees.render();
         showRoundInfo();
         tees.showJoypad();
@@ -297,6 +297,19 @@ class Tournament {
       //TODO UI
       background(25, 25, 77);
     }
+  }
+
+  void nextGen() {
+    round = 1;
+    generation++;
+
+    if (generation == 1) {
+      stage = 1;
+    } else if (generation > 1) {
+      stage = 3;
+    }
+
+    initNewRound();
   }
 
   void detectNoMotion() {
@@ -427,13 +440,6 @@ class Tournament {
         break;
       }
     }
-  }
-
-  void nextGen() {
-    round = 1;
-    generation++;
-
-    initNewRound();
   }
 
   Brain[] groupFight5(Brain[] group) {
@@ -595,8 +601,9 @@ class Tournament {
     text("Stage " + stage, 10, terrain.posY + 40);
     text("Round " + round, 10, terrain.posY + 55);
     text("Stage Round " + stageRound[stage], 10, terrain.posY + 70);
+    text("Auto NextGen " + autoNextGen, 10, terrain.posY + 85);
 
-    if (skip == 0) {
+    if (!skip) {
       tees.calcScore();
       text("score " + tees.get(0).score, 10, terrain.posY + 125);
       text("score " + tees.get(1).score, 700, terrain.posY + 125);
@@ -611,6 +618,6 @@ class Tournament {
     println("endRound " + Arrays.toString(fightGroup));//test
 
     roundEndCode = 0;
-    roundGapTime = (skip == 0) ? maxRoundGapTime : 0;
+    roundGapTime = (skip) ? 0 : maxRoundGapTime;
   }
 }
