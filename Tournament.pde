@@ -98,7 +98,7 @@ class Tournament {
         if (brainGroup5Ctr == 0 && brainGroup2Ctr == 0) {
           if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty");
 
-          copyBrainsToDeque(population, evalDeque);
+          shuffleBrainsToDeque(population, evalDeque);
           brainGroup5Ctr = 1;
         }
 
@@ -240,7 +240,7 @@ class Tournament {
           stage = 0;
           round = 0;
           roundEndCode = -2;
-          
+
           println("population " + population + "\n");//test
         }
 
@@ -255,6 +255,7 @@ class Tournament {
               fightGroup = null;
               clearPopulationScore();
               champion = evalDeque.pop();
+
               println("population " + population + "\n");//test
             } else if (round == (stageRound[1] + stageRound[2])) { // Stage 2.2 ended
               brainGroup2Ctr = 0;
@@ -267,7 +268,7 @@ class Tournament {
               benchmarkLog.clear();
               clearPopulationScore();
               clearPopulationLabel();
-              
+
               println("population " + population + "\n");//test
               println("champion " + champion);//test
               println("good, one more step.");//test
@@ -445,7 +446,7 @@ class Tournament {
       b.clearScore();
     }
   }
-  
+
   void clearPopulationLabel() {
     for (Brain b : population) {
       b.clearLabel();
@@ -473,6 +474,12 @@ class Tournament {
   // Shallow copy, only copy brain reference
   void copyBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
     deque.addAll(popul);
+  }
+  
+  void shuffleBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
+    ArrayList<Brain> al = new ArrayList<>(popul);
+    Collections.shuffle(al);
+    deque.addAll(al);
   }
 
   void logBenchmark() {
