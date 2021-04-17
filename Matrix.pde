@@ -31,8 +31,20 @@ class Matrix {
   }
 
   // Should be static but Processing has a limit on this feature.
-  Matrix fromArray(float[] arr) {
+  Matrix fromInputArray(float[] arr) {
     return new Matrix(arr.length, 1).map((e, i, j) -> arr[i]);
+  }
+
+  Matrix fromArray(float[] arr) {
+    if (arr.length != this.rows*this.cols) throw new RuntimeException("Invalid size.");
+
+    Matrix m = new Matrix(this.rows, this.cols);
+    for (int i = 0; i < this.rows; i++) {
+      for (int j = 0; j < this.cols; j++) {
+        m.data[i][j] = arr[i*this.cols + j];
+      }
+    }
+    return m;
   }
 
   float[] toArray() {

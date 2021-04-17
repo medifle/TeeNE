@@ -353,6 +353,14 @@ class Tournament {
 
     initNewRound();
   }
+  
+  void freePlayMode(boolean flag) {
+    if (flag) {
+      roundEndCode = -1;
+    } else {
+      roundEndCode = -2;
+    }
+  }
 
   void fightMode() {
     round = 1;

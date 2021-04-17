@@ -93,6 +93,16 @@ void gameKeymap(char asciiKey) {
     }
     pause = !pause;
     break;
+  case 'r': // Free play mode
+    if (tournament.roundEndCode == -2 && tournament.generation == 0) {
+      tournament.freePlayMode(true);
+    }
+    break;
+  case 'b': // Back to menu from free play mode
+    if (tournament.roundEndCode == -1 && tournament.generation == 0) {
+      tournament.freePlayMode(false);
+    }
+    break;
   case 'f': // Fight mode: human vs. AI
     if (tournament.roundEndCode == -2 && tournament.generation > 0) {
       tournament.fightMode();

@@ -50,7 +50,7 @@ class NeuralNetwork {
 
   float[] feedforward(float[] inputArray) {
     // Calculate the hidden layer activations
-    Matrix I = new Matrix(0, 0).fromArray(inputArray);
+    Matrix I = new Matrix(0, 0).fromInputArray(inputArray);
     Matrix H = weightsIH.multiply(I)
       .add(biasH)
       .map(ReLU); // Apply activation function
@@ -61,12 +61,50 @@ class NeuralNetwork {
   }
 
   // For neuroevolution
-  //float[] toArray() {
-    
-  //}
-  
-  //TODO fromArray
-  
+  float[] toArray() {
+    int size = hiddenSize*inputSize + inputSize + outputSize*hiddenSize + outputSize;
+    float[] genes = new float[size];
+
+    float[] flatWeightsIH = this.weightsIH.toArray();
+    float[] flatBiasH = this.biasH.toArray();
+    float[] flatweightsHO = this.weightsHO.toArray();
+    float[] flatBiasO = this.biasO.toArray();
+
+    int destPos1 = 0;
+    int destPos2 = destPos1 + flatWeightsIH.length;
+    int destPos3 = destPos2 + flatBiasH.length;
+    int destPos4 = destPos3 + flatweightsHO.length;
+
+    System.arraycopy(flatWeightsIH, 0, genes, destPos1, flatWeightsIH.length);
+    System.arraycopy(flatBiasH, 0, genes, destPos2, flatBiasH.length);
+    System.arraycopy(flatweightsHO, 0, genes, destPos3, flatweightsHO.length);
+    System.arraycopy(flatBiasO, 0, genes, destPos4, flatBiasO.length);
+
+    return genes;
+  }
+
+  void fromArray(float[] genes) {
+    float[] flatWeightsIH = new float[hiddenSize*inputSize];
+    float[] flatBiasH = new float[hiddenSize];
+    float[] flatWeightsHO = new float[outputSize*hiddenSize];
+    float[] flatBiasO = new float[outputSize];
+
+    int srcPos1 = 0;
+    int srcPos2 = srcPos1 + flatWeightsIH.length;
+    int srcPos3 = srcPos2 + flatBiasH.length;
+    int srcPos4 = srcPos3 + flatWeightsHO.length;
+
+    System.arraycopy(genes, srcPos1, flatWeightsIH, 0, flatWeightsIH.length);
+    System.arraycopy(genes, srcPos2, flatBiasH, 0, flatBiasH.length);
+    System.arraycopy(genes, srcPos3, flatWeightsHO, 0, flatWeightsHO.length);
+    System.arraycopy(genes, srcPos4, flatBiasO, 0, flatBiasO.length);
+
+    this.weightsIH = this.weightsIH.fromArray(flatWeightsIH);
+    this.biasH = this.biasH.fromArray(flatBiasH);
+    this.weightsHO = this.weightsHO.fromArray(flatWeightsHO);
+    this.biasO = this.biasO.fromArray(flatBiasO);
+  }
+
   NeuralNetwork copy() {
     return new NeuralNetwork(this);
   }
