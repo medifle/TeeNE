@@ -8,10 +8,8 @@ class NeuralNetwork {
   int outputSize;
 
   Matrix weightsIH; // Weights between input layer and hidden layer
-  Matrix weightsHO; // Weights between hidden layer and output layer
-
-  // Use separate bias matrix, might be easier instead of incorporating into weights matrix
   Matrix biasH; // Bias for hidden layer
+  Matrix weightsHO; // Weights between hidden layer and output layer
   Matrix biasO; // Bias for output layer
 
   // Activation functions
@@ -26,13 +24,13 @@ class NeuralNetwork {
     this.outputSize = outputSize;
 
     this.weightsIH = new Matrix(hiddenSize, inputSize);
-    this.weightsHO = new Matrix(outputSize, hiddenSize);
-    this.weightsIH.randomize();
-    this.weightsHO.randomize();
-
     this.biasH = new Matrix(hiddenSize, 1);
+    this.weightsHO = new Matrix(outputSize, hiddenSize);
     this.biasO = new Matrix(outputSize, 1);
+
+    this.weightsIH.randomize();
     this.biasH.randomize();
+    this.weightsHO.randomize();
     this.biasO.randomize();
   }
 
@@ -42,9 +40,8 @@ class NeuralNetwork {
     this.outputSize = nn.outputSize;
 
     this.weightsIH = nn.weightsIH.copy();
-    this.weightsHO = nn.weightsHO.copy();
-
     this.biasH = nn.biasH.copy();
+    this.weightsHO = nn.weightsHO.copy();
     this.biasO = nn.biasO.copy();
   }
 
@@ -60,10 +57,26 @@ class NeuralNetwork {
     return O.toArray();
   }
 
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    NeuralNetwork nn = (NeuralNetwork) o;
+    return inputSize == nn.inputSize &&
+      hiddenSize == nn.hiddenSize &&
+      outputSize == nn.outputSize &&
+      weightsIH.equals(nn.weightsIH) &&
+      biasH.equals(nn.biasH) &&
+      weightsHO.equals(nn.weightsHO) &&
+      biasO.equals(nn.biasO);
+  }
+
   // For neuroevolution
+  int size() {
+    return hiddenSize*inputSize + inputSize + outputSize*hiddenSize + outputSize;
+  }
+
   float[] toArray() {
-    int size = hiddenSize*inputSize + inputSize + outputSize*hiddenSize + outputSize;
-    float[] genes = new float[size];
+    float[] genes = new float[size()];
 
     float[] flatWeightsIH = this.weightsIH.toArray();
     float[] flatBiasH = this.biasH.toArray();

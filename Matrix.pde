@@ -115,6 +115,15 @@ class Matrix {
       }
     }
   }
+  
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Matrix m = (Matrix) o;
+    return rows == m.rows &&
+      cols == m.cols &&
+      Arrays.deepEquals(data, m.data);
+  }
 
   public String toString() {
     StringBuilder sb = new StringBuilder();

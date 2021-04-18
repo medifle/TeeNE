@@ -8,6 +8,7 @@ Tee tee1, tee2;
 Tees tees;
 
 Tournament tournament;
+TableUtil tableUtil;
 
 PFont FontSansSerif, FontKO;
 
@@ -23,6 +24,7 @@ void setup() {
   terrain = new Terrain();
   tees = new Tees();
   tournament = new Tournament();
+  tableUtil = new TableUtil(tournament);
 }
 
 void draw() {
@@ -109,13 +111,15 @@ void gameKeymap(char asciiKey) {
     }
     break;
   case 'e': // Save population
-    //TODO
     if (tournament.roundEndCode == -2 && tournament.generation > 0) {
-      //
+      tableUtil.saveData();
     }
     break;
   case 'l': // Load population
     //TODO
+    if (tournament.roundEndCode == -2 && tournament.generation == 0) {
+      tableUtil.loadData();
+    }
     break;
   }
 }

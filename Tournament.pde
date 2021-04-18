@@ -279,6 +279,7 @@ class Tournament {
                 stage = 0;
                 round = 0;
                 roundEndCode = -2;
+                skip = false;
               }
             }
           }
@@ -446,7 +447,7 @@ class Tournament {
     destination.add(top);
 
 
-    if (evalDeque == destination) println("evalDeque: " + evalDeque + "\n");//test
+    if (evalDeque == destination) println("evalDeque " + evalDeque + "\n");//test
   }
 
   void clearPopulationScore() {

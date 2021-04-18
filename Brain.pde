@@ -1,8 +1,8 @@
 class Brain {
   String name = "#0";
-  
+
   NeuralNetwork nn;
-  
+
   int score = 0;
 
   // init    Initialization stage
@@ -44,24 +44,35 @@ class Brain {
     this.score = 0;
   }
 
-  void setName(String name) {
-    this.name = name;
-  }
-
   String getName() {
     return this.name;
+  }
+
+  void setName(String name) {
+    this.name = name;
   }
 
   String getLabel() {
     return this.label;
   }
-  
+
   void setLabel(String label) {
     this.label = label;
   }
 
   void clearLabel() {
     this.label = "init";
+  }
+
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Brain b = (Brain) o;
+    return name.equals(b.name) &&
+      nn.equals(b.nn) &&
+      score == b.score &&
+      label.equals(b.label);
   }
 
   public String toString() {
