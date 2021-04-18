@@ -326,7 +326,7 @@ class Tournament {
 
       background(248);
       terrain.render();
-      showTrainingStatus();
+      if (!debug) showTrainingStatus();
 
       // Show necessary game elements only when training is at normal speed
       if (!skip) {

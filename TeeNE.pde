@@ -121,5 +121,10 @@ void gameKeymap(char asciiKey) {
       tableUtil.loadData();
     }
     break;
+  case 'd': // Toggle debug info
+    if (tournament.roundEndCode == -1) {
+      debug = !debug;
+    }
+    break;
   }
 }
