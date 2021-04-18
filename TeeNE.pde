@@ -116,7 +116,6 @@ void gameKeymap(char asciiKey) {
     }
     break;
   case 'l': // Load population
-    //TODO
     if (tournament.roundEndCode == -2 && tournament.generation == 0) {
       tableUtil.loadData();
     }

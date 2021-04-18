@@ -47,12 +47,13 @@ class Tournament {
   /* <stage 3> */
   ArrayList<Brain> nextPopulation;
   HashSet<String> chosenParentSet;
-  ArrayList<Brain> tsPool; // Tournament selection candidates pool
+  ArrayList<Brain> tsPool; // Tournament selection candidate pool
 
   float mutationRate = 0.01;
   Function<Float, Float> randomGaussianMutate = (val) -> {
     if (random(1) < mutationRate) {
       float offset = randomGaussian() * 0.5; // 0.5 is arbitrarily chosen
+      Log.d("offset " + offset);
       return val + offset;
     }
     return val;
@@ -179,7 +180,7 @@ class Tournament {
         tees = new Tees(tee0, tee1);
       } else {                // Stage 2.2 Benchmark
         if (brainGroup2Ctr == 0) {
-          println("start benchmark.");//test
+          Log.i("start benchmark.");
 
           boolean isRemoveSucess = population.remove(champion);
           if (!isRemoveSucess || population.size() != 199) {
@@ -198,7 +199,6 @@ class Tournament {
         if (brainGroup2Ctr == 1) {
           Brain popedBrain = evalDeque.pop();
           fightGroup = new Brain[]{champion, popedBrain};
-          //println("\nbenchgroup " + Arrays.toString(fightGroup));//test
         }
 
         Brain[] match = groupFight2(fightGroup);
@@ -210,7 +210,7 @@ class Tournament {
 
     if (stage == 3) {
       if (brainGroup2Ctr == 0) {
-        println("start crossover.");//test
+        Log.i("start stage 3.");
 
         if (!tsPool.isEmpty()) throw new RuntimeException("tsPool not empty.");
 
@@ -224,13 +224,13 @@ class Tournament {
         Brain b0 = randomBrain(population);
         Brain b1 = randomBrain(population);
         while (b0.getName().equals(b1.getName())) {
-          println("ts: same parent collision " + b0.getName() + "-" + b1.getName());//test
+          Log.d("ts: same parent collision " + b0.getName() + "-" + b1.getName());
 
           b1 = randomBrain(population);
         }
 
         fightGroup = new Brain[]{b0, b1};
-        println("fightGroup " + Arrays.toString(fightGroup));//test
+        Log.d("fightGroup " + Arrays.toString(fightGroup));
       }
 
       Brain[] match = groupFight2(fightGroup);
@@ -290,23 +290,23 @@ class Tournament {
                 chosenParentSet.add(candidatePair);
                 promoteGroupChampion(fightGroup, tsPool);
               } else {
-                println("ts: parent pair collision. " + candidatePair + ".\n");//test
+                Log.d("ts: parent pair collision. " + candidatePair + ".\n");
               }
             }
 
             if (tsPool.isEmpty()) promoteGroupChampion(fightGroup, tsPool);
 
-            // Two parent candidates selected, do crossover and mutation
+            // Two parents selected, do crossover and mutation
             if (tsPool.size() == 2) {
               Brain[] babies = crossover(tsPool.get(0), tsPool.get(1));
               
-              //babies[0].getNN().mutate(randomGaussianMutate);
-              //babies[1].getNN().mutate(randomGaussianMutate);
-              //nextPopulation.add(babies[0]);
-              //nextPopulation.add(babies[1]);
+              babies[0].getNN().mutate(randomGaussianMutate);
+              babies[1].getNN().mutate(randomGaussianMutate);
 
-              println("babies " + Arrays.toString(babies) + " born from " + tsPool + ".\n");//test
+              nextPopulation.add(babies[0]);
+              nextPopulation.add(babies[1]);
 
+              Log.d("babies " + Arrays.toString(babies) + " born from " + tsPool + ".\n");
               tsPool.clear();
             }
           }
@@ -318,7 +318,7 @@ class Tournament {
           round = 0;
           roundEndCode = -2;
 
-          println("population " + population + "\n");//test
+          Log.i("population " + population + "\n");
         }
 
         if (stage == 2) {
@@ -330,7 +330,7 @@ class Tournament {
             clearPopulationScore();
             champion = evalDeque.pop();
 
-            println("population " + population + "\n");//test
+            Log.i("population " + population + "\n");
           } else if (evalDeque.isEmpty() &&
             brainGroup2Ctr == 2 && champion != null) { // Stage 2.2 ended
 
@@ -344,8 +344,8 @@ class Tournament {
             clearPopulationScore();
             clearPopulationLabel();
 
-            println("population " + population + "\n");//test
-            println("champion " + champion);//test
+            Log.i("population " + population + "\n");
+            Log.i("gen " + generation + " finished.\n");
 
             if (autoNextGen) { // Enter next generation
               nextGen();
@@ -361,20 +361,13 @@ class Tournament {
         if (stage == 3 && nextPopulation.size() == 200) {
           brainGroup2Ctr = 0;
           fightGroup = null;
-          //clearPopulationScore(); //FF
-          println("crossover almost finished!");
-
-          println("chosenParentSet " + chosenParentSet);//test
-          println("nextPopulation1 " + nextPopulation + "\n");//test
           population = nextPopulation;
-          nextPopulation.clear();
-
-          println("nextPopulation2 " + nextPopulation + "\n");//test
-
+          // Do not use clear() which will empty population because they now have the same reference
+          nextPopulation = new ArrayList<>();
 
           stage = 2; // stage 3 -> 2
-          println("population " + population + "\n");//test
-          println("stage 3 -> 2...");//test
+          Log.i("population " + population + "\n");
+          Log.i("stage 3 -> 2");
         }
 
         if (stage == 1 && round == stageRound[1]) { // Stage 1 ended
@@ -384,8 +377,8 @@ class Tournament {
           clearPopulationScore();
 
           stage = 2; // stage 1 -> 2
-          println("population " + population + "\n");//test
-          println("stage 1 -> 2...");//test
+          Log.i("population " + population + "\n");
+          Log.i("stage 1 -> 2");
         }
 
         if (round > 0) round++;
@@ -547,8 +540,7 @@ class Tournament {
 
     destination.add(top);
 
-
-    if (evalDeque == destination) println("evalDeque " + evalDeque + "\n");//test
+    if (evalDeque == destination) Log.d("evalDeque " + evalDeque + "\n");
   }
 
   void clearPopulationScore() {
@@ -579,7 +571,7 @@ class Tournament {
       group[i] = deque.pop();
     }
 
-    println("pop" + size + " " + Arrays.toString(group));//test
+    Log.d("pop" + size + " " + Arrays.toString(group));
 
     return group;
   }
@@ -627,7 +619,7 @@ class Tournament {
     float[] babyGenes1 = new float[genesLength];
 
     int cutPoint = int(random(genesLength));
-    println("cutPoint " + cutPoint);//test
+    Log.d("cutPoint " + cutPoint);
 
     // Single point cut
     for (int i = 0; i < genesLength; i++) {
@@ -667,7 +659,7 @@ class Tournament {
     for (int i = 0; i < population.size(); i++) {
       String hkey = champion.getName() + hyphen + population.get(i).getName();
       int[] scores = benchmarkLog.get(hkey);
-      println("i " + i + ". " + "scores " + hkey + ": " + Arrays.toString(scores));//test
+      Log.d("i " + i + ". " + "scores " + hkey + ": " + Arrays.toString(scores));
 
       if (scores[0] >= scores[1]) {
         population.add(i, champion);
@@ -686,52 +678,42 @@ class Tournament {
     int ctrMod = brainGroup5Ctr % 10;
     switch (ctrMod) {
     case 1:
-      //println("groupFight5: case 1");//test
       match[0] = group[0];
       match[1] = group[1];
       break;
     case 2:
-      //println("groupFight5: case 2");//test
       match[0] = group[2];
       match[1] = group[3];
       break;
     case 3:
-      //println("groupFight5: case 3");//test
       match[0] = group[4];
       match[1] = group[0];
       break;
     case 4:
-      //println("groupFight5: case 4");//test
       match[0] = group[1];
       match[1] = group[2];
       break;
     case 5:
-      //println("groupFight5: case 5");//test
       match[0] = group[3];
       match[1] = group[4];
       break;
     case 6:
-      //println("groupFight5: case 6");//test
       match[0] = group[0];
       match[1] = group[2];
       break;
     case 7:
-      //println("groupFight5: case 7");//test
       match[0] = group[1];
       match[1] = group[3];
       break;
     case 8:
-      //println("groupFight5: case 8");//test
       match[0] = group[2];
       match[1] = group[4];
       break;
     case 9:
-      //println("groupFight5: case 9");//test
       match[0] = group[3];
       match[1] = group[0];
       break;
     case 0:
-      //println("groupFight5: case 0");//test
       match[0] = group[4];
       match[1] = group[1];
       break;
@@ -752,12 +734,10 @@ class Tournament {
     int ctrMod = brainGroup2Ctr % 2;
     switch (ctrMod) {
     case 1:
-      //println("groupFight2: case 1");//test
       match[0] = group[0];
       match[1] = group[1];
       break;
     case 0:
-      //println("groupFight2: case 0");//test
       match[0] = group[1];
       match[1] = group[0];
       break;
@@ -853,8 +833,8 @@ class Tournament {
   void endRound() {
     selectWinner();
     tees.syncScore();
-    println("endRound " + brainGroup5Ctr + " " + brainGroup2Ctr +
-      " " + Arrays.toString(fightGroup));//test
+    Log.d("endRound " + brainGroup5Ctr + " " + brainGroup2Ctr +
+      " " + Arrays.toString(fightGroup));
 
     roundEndCode = 0;
     roundGapTime = (skip) ? 0 : maxRoundGapTime;
