@@ -17,7 +17,9 @@ class Tournament {
   int round = 0;
   int generation = 0; // 0 free play mode
 
-  // -2 menu, the current generation finished
+  // -2 menu.
+  //   When game starts, or
+  //   When the current generation finished, go back to menu
   // -1 ready to start the next generation
   // 0 the current round ended
   int roundEndCode = -2;
@@ -188,7 +190,6 @@ class Tournament {
 
     if (stage == 3) {
       //TODO
-      println("stage 3!");
     }
 
     if (stage == 4) {
@@ -220,15 +221,15 @@ class Tournament {
         if (brainGroup5Ctr == 10) {
           if (stage == 1) {
             promoteGroupChampion(fightGroup, population);
-          } else if (stage == 2) {
+          } else if (stage == 2) { // Stage 2.1
             promoteGroupChampion(fightGroup, evalDeque);
           }
         }
         if (brainGroup2Ctr == 2) {
           if (stage == 2) {
-            if (champion == null) {
+            if (champion == null) { // Stage 2.1
               promoteGroupChampion(fightGroup, evalDeque);
-            } else {
+            } else {                // Stage 2.2
               logBenchmark();
               champion.clearScore();
             }
@@ -244,56 +245,53 @@ class Tournament {
           println("population " + population + "\n");//test
         }
 
-        if (generation == 1) {
-          if (stage == 2) {
-            if (round == (stageRound[1] + evalChampionRound)) { // Stage 2.1 ended
-              if (evalDeque.peekFirst().getLabel() != "eval1") {
-                throw new RuntimeException("Champion error.");
-              }
-
-              brainGroup2Ctr = 0;
-              fightGroup = null;
-              clearPopulationScore();
-              champion = evalDeque.pop();
-
-              println("population " + population + "\n");//test
-            } else if (round == (stageRound[1] + stageRound[2])) { // Stage 2.2 ended
-              brainGroup2Ctr = 0;
-              fightGroup = null;
-              evalDeque.clear();
-
-              sortPopulation();
-              insertChampion();
-              champion = null;
-              benchmarkLog.clear();
-              clearPopulationScore();
-              clearPopulationLabel();
-
-              println("population " + population + "\n");//test
-              println("champion " + champion);//test
-              println("good, one more step.");//test
-
-              if (autoNextGen) { // Enter next generation
-                nextGen();
-              } else {           // Back to menu
-                stage = 0;
-                round = 0;
-                roundEndCode = -2;
-                skip = false;
-              }
+        if (stage == 2) {
+          if (round == (stageRound[1] + evalChampionRound)) { // Stage 2.1 ended
+            if (evalDeque.peekFirst().getLabel() != "eval1") {
+              throw new RuntimeException("Champion error.");
             }
-          }
 
-          if (stage == 1 && round == stageRound[1]) { // Stage 1 ended
-            // Reset
-            brainGroup5Ctr = 0;
+            brainGroup2Ctr = 0;
             fightGroup = null;
             clearPopulationScore();
+            champion = evalDeque.pop();
 
-            stage = 2; // Enter stage 2
-            println("population " + population);//test
-            println("going to stage 2...");//test
+            println("population " + population + "\n");//test
+          } else if (round == (stageRound[1] + stageRound[2])) { // Stage 2.2 ended
+            brainGroup2Ctr = 0;
+            fightGroup = null;
+            evalDeque.clear();
+
+            sortPopulation();
+            insertChampion();
+            champion = null;
+            benchmarkLog.clear();
+            clearPopulationScore();
+            clearPopulationLabel();
+
+            println("population " + population + "\n");//test
+            println("champion " + champion);//test
+
+            if (autoNextGen) { // Enter next generation
+              nextGen();
+            } else {           // Back to menu
+              stage = 0;
+              round = 0;
+              roundEndCode = -2;
+              skip = false;
+            }
           }
+        }
+
+        if (stage == 1 && round == stageRound[1]) { // Stage 1 ended
+          // Reset
+          brainGroup5Ctr = 0;
+          fightGroup = null;
+          clearPopulationScore();
+
+          stage = 2; // Enter stage 2
+          println("population " + population + "\n");//test
+          println("going to stage 2...");//test
         }
 
         if (round > 0) round++;
@@ -303,7 +301,7 @@ class Tournament {
         if (roundEndCode != -2) initNewRound();
       }
     } else if (roundEndCode == -1) { // Training
-      // If game is in progress, do training
+      // If game is in progress, do training, fastforward if enabled
       while (roundEndCode == -1) {
         roundFrameCtr++;
         roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
@@ -354,7 +352,7 @@ class Tournament {
 
     initNewRound();
   }
-  
+
   void freePlayMode(boolean flag) {
     if (flag) {
       roundEndCode = -1;
@@ -484,7 +482,7 @@ class Tournament {
   void copyBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
     deque.addAll(popul);
   }
-  
+
   void shuffleBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
     ArrayList<Brain> al = new ArrayList<>(popul);
     Collections.shuffle(al);
@@ -492,7 +490,8 @@ class Tournament {
   }
 
   void logBenchmark() {
-    String hkey = fightGroup[0].getName() + benchmarkHyphen + fightGroup[1].getName(); // Uniqueness guaranteed
+    // Uniqueness guaranteed
+    String hkey = fightGroup[0].getName() + benchmarkHyphen + fightGroup[1].getName();
     int[] scores = new int[]{fightGroup[0].getScore(), fightGroup[1].getScore()};
     benchmarkLog.put(hkey, scores);
   }
@@ -501,7 +500,7 @@ class Tournament {
     Collections.sort(population, Comparator.<Brain>comparingInt(a -> a.score).reversed());
   }
 
-  // population should be sorted in decreasing order by score
+  // population should be sorted in decreasing order by score before calling this method
   void insertChampion() {
     for (int i = 0; i < population.size(); i++) {
       String hkey = champion.getName() + benchmarkHyphen + population.get(i).getName();
