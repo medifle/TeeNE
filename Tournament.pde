@@ -1,6 +1,8 @@
 class Tournament {
   int roundFrameCtr = 0; // Frame count per round
 
+  int generation = 0; // 0 free play mode
+
   // 0  menu, free play mode
   //
   // <training>
@@ -15,7 +17,6 @@ class Tournament {
   int[] stageRound = {0, 2000, 892, 360, 2};
 
   int round = 0;
-  int generation = 0; // 0 free play mode
 
   // -2 menu.
   //   When game starts, or
@@ -23,6 +24,8 @@ class Tournament {
   // -1 ready to start the next generation
   // 0 the current round ended
   int roundEndCode = -2;
+
+  int availableId = 1; // Used to generate new brain name
 
   ArrayList<Brain> population;
 
@@ -32,13 +35,29 @@ class Tournament {
   int brainGroup2Ctr = 0; // effective range [1-2], 0 initial value
   /* </group fight> */
 
-  /* <evaluation stage> */
+  String hyphen = "-";
+
+  /* <stage 2> */
   ArrayDeque<Brain> evalDeque;
   Brain champion;
   int evalChampionRound = 494; // 40*10+8*10+4*2+2*2+1*2
   HashMap<String, int[]> benchmarkLog;
-  String benchmarkHyphen = "-";
-  /* </evaluation stage> */
+  /* </stage 2> */
+
+  /* <stage 3> */
+  ArrayList<Brain> nextPopulation;
+  HashSet<String> chosenParentSet;
+  ArrayList<Brain> tsPool; // Tournament selection candidates pool
+
+  float mutationRate = 0.01;
+  Function<Float, Float> randomGaussianMutate = (val) -> {
+    if (random(1) < mutationRate) {
+      float offset = randomGaussian() * 0.5; // 0.5 is arbitrarily chosen
+      return val + offset;
+    }
+    return val;
+  };
+  /* </stage 3> */
 
   // -1 tie
   // 0 teeId 0 wins
@@ -60,7 +79,7 @@ class Tournament {
   /* </no-motion detection> */
 
   // Fight mode
-  // A deepcopy of the population champion
+  // A deepcopy of the champion after benchmark
   Brain enemyBrain;
 
   Tournament() {
@@ -68,6 +87,9 @@ class Tournament {
     prevIns = new float[tees.getSize()][14];
     evalDeque = new ArrayDeque<>();
     benchmarkLog = new HashMap<>();
+    nextPopulation = new ArrayList<>();
+    chosenParentSet= new HashSet<>();
+    tsPool = new ArrayList<>();
   }
 
   void initNewRound() {
@@ -138,10 +160,8 @@ class Tournament {
         // Pop 5 or 2 brains
         if (brainGroup5Ctr == 1) {
           fightGroup = popBrains(evalDeque, 5);
-          println("pop5 " + Arrays.toString(fightGroup));//test
         } else if (brainGroup2Ctr == 1) {
           fightGroup = popBrains(evalDeque, 2);
-          println("pop2 " + Arrays.toString(fightGroup));//test
         }
 
         // Only one counter > 0 here
@@ -189,7 +209,34 @@ class Tournament {
     }
 
     if (stage == 3) {
-      //TODO
+      if (brainGroup2Ctr == 0) {
+        println("start crossover.");//test
+
+        if (!tsPool.isEmpty()) throw new RuntimeException("tsPool not empty.");
+
+        passElites(20);
+        brainGroup2Ctr = 1;
+      }
+
+      if (brainGroup2Ctr == 3) brainGroup2Ctr = 1;
+
+      if (brainGroup2Ctr == 1) {
+        Brain b0 = randomBrain(population);
+        Brain b1 = randomBrain(population);
+        while (b0.getName().equals(b1.getName())) {
+          println("ts: same parent collision " + b0.getName() + "-" + b1.getName());//test
+
+          b1 = randomBrain(population);
+        }
+
+        fightGroup = new Brain[]{b0, b1};
+        println("fightGroup " + Arrays.toString(fightGroup));//test
+      }
+
+      Brain[] match = groupFight2(fightGroup);
+      Tee tee0 = new Tee(0, match[0]);
+      Tee tee1 = new Tee(1, match[1]);
+      tees = new Tees(tee0, tee1);
     }
 
     if (stage == 4) {
@@ -233,6 +280,35 @@ class Tournament {
               logBenchmark();
               champion.clearScore();
             }
+          } else if (stage == 3) {
+            if (tsPool.size() == 1) {
+              Brain parent0 = tsPool.get(0);
+              Brain parent1 = getGroupChampion(fightGroup);
+
+              String candidatePair = getSortedPairKey(parent0.getName(), parent1.getName());
+              if (!chosenParentSet.contains(candidatePair)) {
+                chosenParentSet.add(candidatePair);
+                promoteGroupChampion(fightGroup, tsPool);
+              } else {
+                println("ts: parent pair collision. " + candidatePair + ".\n");//test
+              }
+            }
+
+            if (tsPool.isEmpty()) promoteGroupChampion(fightGroup, tsPool);
+
+            // Two parent candidates selected, do crossover and mutation
+            if (tsPool.size() == 2) {
+              Brain[] babies = crossover(tsPool.get(0), tsPool.get(1));
+              
+              //babies[0].getNN().mutate(randomGaussianMutate);
+              //babies[1].getNN().mutate(randomGaussianMutate);
+              //nextPopulation.add(babies[0]);
+              //nextPopulation.add(babies[1]);
+
+              println("babies " + Arrays.toString(babies) + " born from " + tsPool + ".\n");//test
+
+              tsPool.clear();
+            }
           }
         }
 
@@ -246,10 +322,8 @@ class Tournament {
         }
 
         if (stage == 2) {
-          if (round == (stageRound[1] + evalChampionRound)) { // Stage 2.1 ended
-            if (evalDeque.peekFirst().getLabel() != "eval1") {
-              throw new RuntimeException("Champion error.");
-            }
+          if (evalDeque.size() == 1 &&
+            evalDeque.peekFirst().getLabel().equals("eval1")) { // Stage 2.1 ended
 
             brainGroup2Ctr = 0;
             fightGroup = null;
@@ -257,10 +331,11 @@ class Tournament {
             champion = evalDeque.pop();
 
             println("population " + population + "\n");//test
-          } else if (round == (stageRound[1] + stageRound[2])) { // Stage 2.2 ended
+          } else if (evalDeque.isEmpty() &&
+            brainGroup2Ctr == 2 && champion != null) { // Stage 2.2 ended
+
             brainGroup2Ctr = 0;
             fightGroup = null;
-            evalDeque.clear();
 
             sortPopulation();
             insertChampion();
@@ -283,15 +358,34 @@ class Tournament {
           }
         }
 
+        if (stage == 3 && nextPopulation.size() == 200) {
+          brainGroup2Ctr = 0;
+          fightGroup = null;
+          //clearPopulationScore(); //FF
+          println("crossover almost finished!");
+
+          println("chosenParentSet " + chosenParentSet);//test
+          println("nextPopulation1 " + nextPopulation + "\n");//test
+          population = nextPopulation;
+          nextPopulation.clear();
+
+          println("nextPopulation2 " + nextPopulation + "\n");//test
+
+
+          stage = 2; // stage 3 -> 2
+          println("population " + population + "\n");//test
+          println("stage 3 -> 2...");//test
+        }
+
         if (stage == 1 && round == stageRound[1]) { // Stage 1 ended
           // Reset
           brainGroup5Ctr = 0;
           fightGroup = null;
           clearPopulationScore();
 
-          stage = 2; // Enter stage 2
+          stage = 2; // stage 1 -> 2
           println("population " + population + "\n");//test
-          println("going to stage 2...");//test
+          println("stage 1 -> 2...");//test
         }
 
         if (round > 0) round++;
@@ -341,6 +435,7 @@ class Tournament {
   }
 
   void nextGen() {
+    availableId = 1;
     round = 1;
     generation++;
 
@@ -405,17 +500,25 @@ class Tournament {
     return true;
   }
 
+  Brain getGroupChampion(Brain[] group) {
+    Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score).reversed());
+    return group[0];
+  }
+  
+  String generateName() {
+    String name = generation + "#" + availableId;
+    availableId++;
+    return name;
+  }
+
   // Push the group champion to the destination collection
   void promoteGroupChampion(Brain[] group, Collection<Brain> destination) {
-    Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score).reversed());
-    Brain top = group[0];
-
+    Brain top = getGroupChampion(group);
     top.clearScore();
 
     // Give the top a name by natural order
     if (stage == 1) {
-      String name = "#" + (population.size() + 1);
-      top.setName(name);
+      top.setName(generateName());
     }
 
     // Update label for the promotion
@@ -475,23 +578,82 @@ class Tournament {
     for (int i = 0; i < size; i++) {
       group[i] = deque.pop();
     }
+
+    println("pop" + size + " " + Arrays.toString(group));//test
+
     return group;
   }
 
-  // Shallow copy, only copy brain reference
+  // Shallow copy, no overwrite
   void copyBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
     deque.addAll(popul);
   }
 
+  // Shallow copy, no overwrite
   void shuffleBrainsToDeque(ArrayList<Brain> popul, ArrayDeque<Brain> deque) {
     ArrayList<Brain> al = new ArrayList<>(popul);
     Collections.shuffle(al);
     deque.addAll(al);
   }
 
+  // Elitism
+  // Pass top 10% of population directly to the next generation
+  void passElites(int n) {
+    if (!nextPopulation.isEmpty()) throw new RuntimeException("nextPopulation not empty.");
+
+    nextPopulation.addAll(population.subList(0, n));
+  }
+
+  Brain randomBrain(ArrayList<Brain> al) {
+    int index = int(random(al.size()));
+    return al.get(index);
+  }
+
+  // Sort two strings lexicographically
+  String getSortedPairKey(String bname0, String bname1) {
+    if (bname0.compareTo(bname1) < 0) {
+      return bname0 + hyphen + bname1;
+    } else {
+      return bname1 + hyphen + bname0;
+    }
+  }
+
+  Brain[] crossover(Brain p0, Brain p1) {
+    float[] parentGenes0 = p0.getNN().toArray();
+    float[] parentGenes1 = p1.getNN().toArray();
+    int genesLength = parentGenes0.length;
+    
+    float[] babyGenes0 = new float[genesLength];
+    float[] babyGenes1 = new float[genesLength];
+
+    int cutPoint = int(random(genesLength));
+    println("cutPoint " + cutPoint);//test
+
+    // Single point cut
+    for (int i = 0; i < genesLength; i++) {
+      if (i <= cutPoint) {
+        babyGenes0[i] = parentGenes1[i];
+        babyGenes1[i] = parentGenes0[i];
+      } else {
+        babyGenes0[i] = parentGenes0[i];
+        babyGenes1[i] = parentGenes1[i];
+      }
+    }
+
+    Brain b0 = new Brain();
+    b0.setName(generateName());
+    b0.getNN().fromArray(babyGenes0);
+    
+    Brain b1 = new Brain();
+    b1.setName(generateName());
+    b1.getNN().fromArray(babyGenes1);
+  
+    return new Brain[]{b0, b1};
+  }
+
   void logBenchmark() {
     // Uniqueness guaranteed
-    String hkey = fightGroup[0].getName() + benchmarkHyphen + fightGroup[1].getName();
+    String hkey = fightGroup[0].getName() + hyphen + fightGroup[1].getName();
     int[] scores = new int[]{fightGroup[0].getScore(), fightGroup[1].getScore()};
     benchmarkLog.put(hkey, scores);
   }
@@ -503,9 +665,9 @@ class Tournament {
   // population should be sorted in decreasing order by score before calling this method
   void insertChampion() {
     for (int i = 0; i < population.size(); i++) {
-      String hkey = champion.getName() + benchmarkHyphen + population.get(i).getName();
+      String hkey = champion.getName() + hyphen + population.get(i).getName();
       int[] scores = benchmarkLog.get(hkey);
-      println("i " + i + ". " + "scores " + Arrays.toString(scores));//test
+      println("i " + i + ". " + "scores " + hkey + ": " + Arrays.toString(scores));//test
 
       if (scores[0] >= scores[1]) {
         population.add(i, champion);
@@ -691,7 +853,8 @@ class Tournament {
   void endRound() {
     selectWinner();
     tees.syncScore();
-    println("endRound " + Arrays.toString(fightGroup));//test
+    println("endRound " + brainGroup5Ctr + " " + brainGroup2Ctr +
+      " " + Arrays.toString(fightGroup));//test
 
     roundEndCode = 0;
     roundGapTime = (skip) ? 0 : maxRoundGapTime;

@@ -75,6 +75,7 @@ class NeuralNetwork {
     return hiddenSize*inputSize + inputSize + outputSize*hiddenSize + outputSize;
   }
 
+  // Export genes
   float[] toArray() {
     float[] genes = new float[size()];
 
@@ -96,6 +97,7 @@ class NeuralNetwork {
     return genes;
   }
 
+  // Import genes
   void fromArray(float[] genes) {
     float[] flatWeightsIH = new float[hiddenSize*inputSize];
     float[] flatBiasH = new float[hiddenSize];
@@ -123,9 +125,9 @@ class NeuralNetwork {
   }
 
   void mutate(Function<Float, Float> func) {
-    this.weightsIH.map(func);
-    this.weightsHO.map(func);
-    this.biasH.map(func);
-    this.biasO.map(func);
+    this.weightsIH.selfMap(func);
+    this.biasH.selfMap(func);
+    this.weightsHO.selfMap(func);
+    this.biasO.selfMap(func);
   }
 }

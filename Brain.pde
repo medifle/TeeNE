@@ -1,5 +1,5 @@
 class Brain {
-  String name = "#0";
+  String name = "0#0";
 
   NeuralNetwork nn;
 
