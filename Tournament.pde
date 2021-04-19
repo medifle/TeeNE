@@ -72,7 +72,7 @@ class Tournament {
 
   boolean skip = false; // true fastforward training
   boolean skipOne = false; // true fastforward only 1 round
-  boolean autoNextGen = false; // true continuous evolution
+  boolean autoNextGen = false; // true nonstop evolution
 
   /* <no-motion detection> */
   float[][] prevIns;
@@ -810,7 +810,7 @@ class Tournament {
   void showTrainingStatus() {
     fill(20);
     noStroke();
-    textFont(FontSansSerif);
+    textFont(FontConsolas);
     textSize(14);
 
     int baseY = 25;
@@ -819,12 +819,12 @@ class Tournament {
     text("Stage " + stage, 10, terrain.posY + baseY + 1*gapY);
     text("Round " + round, 10, terrain.posY + baseY + 2*gapY);
     text("Stage Round " + stageRound[stage], 10, terrain.posY + baseY + 3*gapY);
-    text("Auto NextGen " + autoNextGen, 10, terrain.posY + baseY + 4*gapY);
+    text("Nonstop " + autoNextGen, 10, terrain.posY + baseY + 4*gapY);
 
     if (!skip) {
       tees.calcScore();
       text("score " + tees.get(0).score, 10, terrain.posY + 125);
-      text("score " + tees.get(1).score, 700, terrain.posY + 125);
+      text("score " + tees.get(1).score, 690, terrain.posY + 125);
     }
 
     stroke(20); // Restore stroke

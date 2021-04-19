@@ -10,7 +10,7 @@ Tees tees;
 Tournament tournament;
 TableUtil tableUtil;
 
-PFont FontSansSerif, FontKO;
+PFont FontSansSerif, FontKO, FontConsolas;
 
 
 void setup() {
@@ -20,6 +20,7 @@ void setup() {
   FontSansSerif = loadFont("SansSerif-60.vlw");
   // createFont to avoid loadFont large vlw font and ground disappearing bug when rendered
   FontKO = createFont("HelveticaNeue-MediumItalic", 90);
+  FontConsolas = loadFont("Consolas-28.vlw");
 
   terrain = new Terrain();
   tees = new Tees();
@@ -68,24 +69,24 @@ void teeControlKeymap(int k, boolean decision) {
 
 void gameKeymap(char asciiKey) {
   switch(asciiKey) {
-  case 'q': // Switch player
-    tees.getHumanPlayer().cancelPressStatus();
-    tees.switchPlayer();
-    break;
-  case 'v': // Fastforward training
-    tournament.skip = !tournament.skip;
-    break;
-  case 's': // Fastforward one round
-    tournament.skip = true;
-    tournament.skipOne = true;
-    break;
-  case 'g': // Continuous evolution
-    tournament.autoNextGen = !tournament.autoNextGen;
-    break;
   case 'n': // Start next generation
     if (tournament.roundEndCode == -2) {
       tournament.nextGen();
     }
+    break;
+  case 'v': // Fastforward training
+    if (tournament.roundEndCode != -2 && tournament.generation > 0) { // Only enabled in training
+      tournament.skip = !tournament.skip;
+    }
+    break;
+  case 's': // Fastforward one round
+    if (tournament.roundEndCode != -2) { // Enabled in training and free play mode
+      tournament.skip = true;
+      tournament.skipOne = true;
+    }
+    break;
+  case 'g': // Nonstop evolution
+    tournament.autoNextGen = !tournament.autoNextGen;
     break;
   case 'p': // Pause
     if (pause) {
@@ -98,6 +99,12 @@ void gameKeymap(char asciiKey) {
   case 'r': // Free play mode
     if (tournament.roundEndCode == -2 && tournament.generation == 0) {
       tournament.freePlayMode(true);
+    }
+    break;
+  case 'q': // Switch player in free play mode
+    if (tournament.roundEndCode == -1 && tournament.generation == 0) {
+      tees.getHumanPlayer().cancelPressStatus();
+      tees.switchPlayer();
     }
     break;
   case 'b': // Back to menu from free play mode
