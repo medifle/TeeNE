@@ -81,13 +81,15 @@ void gameKeymap(char asciiKey) {
     }
     break;
   case 's': // Fastforward one round
-    if (tournament.roundEndCode != -2) { // Enabled in training and free play mode
+    if (tournament.roundEndCode != -2) { // Enabled in training, free play and fight mode
       tournament.skip = true;
       tournament.skipOne = true;
     }
     break;
-  case 'g': // Nonstop evolution
-    tournament.autoNextGen = !tournament.autoNextGen;
+  case 'g': // Nonstop evolution, only enabled in training
+    if (tournament.roundEndCode != -2 && tournament.generation > 0 && tournament.stage != 4) {
+      tournament.autoNextGen = !tournament.autoNextGen;
+    }
     break;
   case 'p': // Pause
     if (pause) {

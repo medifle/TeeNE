@@ -121,7 +121,7 @@ class Tournament {
     if (stage == 2) {
       if (champion == null) { // Stage 2.1 Get champion
         if (brainGroup5Ctr == 0 && brainGroup2Ctr == 0) {
-          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty");
+          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque not empty.");
 
           shuffleBrainsToDeque(population, evalDeque);
           brainGroup5Ctr = 1;
@@ -172,7 +172,7 @@ class Tournament {
         } else if (brainGroup2Ctr > 0) {
           match = groupFight2(fightGroup);
         } else {
-          throw new RuntimeException("Match error: should not reach here.");
+          throw new RuntimeException("Match error.");
         }
 
         Tee tee0 = new Tee(0, match[0]);
@@ -187,8 +187,8 @@ class Tournament {
             throw new RuntimeException("Remove error.");
           }
 
-          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque error: not empty.");
-          if (!benchmarkLog.isEmpty()) throw new RuntimeException("benchmarkLog error: not empty.");
+          if (!evalDeque.isEmpty()) throw new RuntimeException("evalDeque not empty.");
+          if (!benchmarkLog.isEmpty()) throw new RuntimeException("benchmarkLog not empty.");
 
           copyBrainsToDeque(population, evalDeque);
           brainGroup2Ctr = 1;
@@ -453,7 +453,6 @@ class Tournament {
   void fightMode() {
     round = 1;
     stage = 4;
-    skip = false;
 
     initNewRound();
   }
