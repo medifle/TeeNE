@@ -299,7 +299,7 @@ class Tournament {
             // Two parents selected, do crossover and mutation
             if (tsPool.size() == 2) {
               Brain[] babies = crossover(tsPool.get(0), tsPool.get(1));
-              
+
               babies[0].getNN().mutate(randomGaussianMutate);
               babies[1].getNN().mutate(randomGaussianMutate);
 
@@ -411,7 +411,7 @@ class Tournament {
 
       background(248);
       terrain.render();
-      if (!debug) showTrainingStatus();
+      if (!debug) showTrainingInfo();
 
       // Show necessary game elements only when training is at normal speed
       if (!skip) {
@@ -422,8 +422,9 @@ class Tournament {
         if (roundEndCode == 0) showRoundResult();
       }
     } else if (roundEndCode == -2) { // Generation finished, back to menu
-      //TODO UI
-      background(25, 25, 77);
+      background(21, 26, 45);
+      showTitle();
+      showMenu();
     }
   }
 
@@ -497,7 +498,7 @@ class Tournament {
     Arrays.sort(group, Comparator.<Brain>comparingInt(a -> a.score).reversed());
     return group[0];
   }
-  
+
   String generateName() {
     String name = generation + "#" + availableId;
     availableId++;
@@ -614,7 +615,7 @@ class Tournament {
     float[] parentGenes0 = p0.getNN().toArray();
     float[] parentGenes1 = p1.getNN().toArray();
     int genesLength = parentGenes0.length;
-    
+
     float[] babyGenes0 = new float[genesLength];
     float[] babyGenes1 = new float[genesLength];
 
@@ -635,11 +636,11 @@ class Tournament {
     Brain b0 = new Brain();
     b0.setName(generateName());
     b0.getNN().fromArray(babyGenes0);
-    
+
     Brain b1 = new Brain();
     b1.setName(generateName());
     b1.getNN().fromArray(babyGenes1);
-  
+
     return new Brain[]{b0, b1};
   }
 
@@ -775,11 +776,10 @@ class Tournament {
   }
 
   void showRoundResult() {
-    // Show winner
-    if (winner > -1) {
+    if (winner > -1) { // Show winner
       int offsetX = 130;
       fill(60);
-      textFont(FontKO);
+      textFont(FontHNMI);
       textSize(40);
       textAlign(CENTER, CENTER);
       if (winner == 0) {
@@ -787,9 +787,9 @@ class Tournament {
       } else if (winner == 1) {
         text("WINNER", width-offsetX, 60);
       }
-    } else { // No winner, a tie
+    } else {           // No winner, a tie
       fill(70);
-      textFont(FontKO);
+      textFont(FontHNMI);
       textSize(40);
       textAlign(CENTER, CENTER);
       text("DRAW", width/2, 100);
@@ -798,7 +798,7 @@ class Tournament {
     // Show K.O.
     if (tees.areKOEnd()) {
       fill(60);
-      textFont(FontKO);
+      textFont(FontHNMI);
       textSize(90);
       textAlign(CENTER, CENTER);
       text("K.O.", 390, 200);
@@ -807,7 +807,36 @@ class Tournament {
     textAlign(LEFT, BASELINE); // Restore default setting
   }
 
-  void showTrainingStatus() {
+  void showTitle() {
+    fill(255);
+    noStroke();
+    textFont(FontMonoL);
+    textSize(45);
+    text("TeeNE", 10, 40);
+
+    stroke(20); // Restore stroke
+  }
+
+  void showMenu() {
+    fill(255); // 180,250,114, 109,222,187
+    noStroke();
+    textFont(FontMonoL);
+    textSize(28);
+
+    if (generation == 0) {
+      text("[L] Load", 270, 230);
+      text("[R] Free Play", 270, 280);
+    } else if (generation > 0) {
+      text("[E] Save", 270, 230);
+      text("[F] Fight", 270, 280);
+    }
+    text("[N] Next Gen", 270, 330);
+    text("Gen " + generation, 10, 540);
+
+    stroke(20); // Restore stroke
+  }
+
+  void showTrainingInfo() {
     fill(20);
     noStroke();
     textFont(FontConsolas);

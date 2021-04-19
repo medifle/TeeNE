@@ -10,7 +10,7 @@ Tees tees;
 Tournament tournament;
 TableUtil tableUtil;
 
-PFont FontSansSerif, FontKO, FontConsolas;
+PFont FontSansSerif, FontConsolas, FontHNMI, FontMonoL;
 
 
 void setup() {
@@ -18,9 +18,10 @@ void setup() {
   size(770, 550, P2D);
   // loadFont to display better quality (but not perfect) in P2D mode
   FontSansSerif = loadFont("SansSerif-60.vlw");
-  // createFont to avoid loadFont large vlw font and ground disappearing bug when rendered
-  FontKO = createFont("HelveticaNeue-MediumItalic", 90);
   FontConsolas = loadFont("Consolas-28.vlw");
+  // createFont to avoid loadFont large vlw font and ground disappearing bug when rendered
+  FontHNMI = createFont("HelveticaNeue-MediumItalic", 90);
+  FontMonoL = createFont("RobotoMonoNerdFontComplete-Medium", 84);
 
   terrain = new Terrain();
   tees = new Tees();

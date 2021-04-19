@@ -8,7 +8,7 @@ class PBullet {
   // 1 facing right
   // -1 facing left
   int face;
-  
+
   PVector pos;
   PVector vel;
 
