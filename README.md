@@ -39,3 +39,9 @@
 <kbd>Q</kbd> - Switch player
 
 <kbd>B</kbd> - Back to menu
+
+## Platform
+Processing 4.0 alpha 3
+
+### Known issues
+Export application to Windows

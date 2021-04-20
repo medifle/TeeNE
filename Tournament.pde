@@ -347,6 +347,7 @@ class Tournament {
             Log.i("population " + population + "\n");
             Log.i("gen " + generation + " finished.\n");
 
+            if (generation % 100 == 0) tableUtil.saveData();
             if (autoNextGen) { // Enter next generation
               nextGen();
             } else {           // Back to menu
