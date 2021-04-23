@@ -264,7 +264,7 @@ class Tournament {
     if (roundEndCode == 0) { // Round ended
       if (roundGapTime > 0) {
         roundGapTime--;
-      } else if (roundGapTime == 0) {
+      } else if (roundGapTime == 0) { // Prepare next step
         if (brainGroup5Ctr == 10) {
           if (stage == 1) {
             promoteGroupChampion(fightGroup, population);
@@ -298,7 +298,8 @@ class Tournament {
 
             // Two parents selected, do crossover and mutation
             if (tsPool.size() == 2) {
-              Brain[] babies = crossover(tsPool.get(0), tsPool.get(1));
+              //Brain[] babies = crossover(tsPool.get(0), tsPool.get(1)); // 1-point
+              Brain[] babies = crossover2(tsPool.get(0), tsPool.get(1));  // 2-point
 
               babies[0].getNN().mutate(randomGaussianMutate);
               babies[1].getNN().mutate(randomGaussianMutate);
@@ -388,8 +389,8 @@ class Tournament {
 
         if (roundEndCode != -2) initNewRound();
       }
-    } else if (roundEndCode == -1) { // Training
-      // If game is in progress, do training, fastforward if enabled
+    } else if (roundEndCode == -1) { // In combat
+      // If game is in progress, do combat, fastforward if enabled
       while (roundEndCode == -1) {
         roundFrameCtr++;
         roundTimeLeft = maxRoundTime - roundFrameCtr / 60;
@@ -611,6 +612,7 @@ class Tournament {
     }
   }
 
+  // Single-point crossover
   Brain[] crossover(Brain p0, Brain p1) {
     float[] parentGenes0 = p0.getNN().toArray();
     float[] parentGenes1 = p1.getNN().toArray();
@@ -625,6 +627,43 @@ class Tournament {
     // Single point cut
     for (int i = 0; i < genesLength; i++) {
       if (i <= cutPoint) {
+        babyGenes0[i] = parentGenes1[i];
+        babyGenes1[i] = parentGenes0[i];
+      } else {
+        babyGenes0[i] = parentGenes0[i];
+        babyGenes1[i] = parentGenes1[i];
+      }
+    }
+
+    Brain b0 = new Brain();
+    b0.setName(generateName());
+    b0.getNN().fromArray(babyGenes0);
+
+    Brain b1 = new Brain();
+    b1.setName(generateName());
+    b1.getNN().fromArray(babyGenes1);
+
+    return new Brain[]{b0, b1};
+  }
+
+  // Two-point crossover
+  Brain[] crossover2(Brain p0, Brain p1) {
+    float[] parentGenes0 = p0.getNN().toArray();
+    float[] parentGenes1 = p1.getNN().toArray();
+    int genesLength = parentGenes0.length;
+
+    float[] babyGenes0 = new float[genesLength];
+    float[] babyGenes1 = new float[genesLength];
+
+    int randomIndex0 = int(random(genesLength));
+    int randomIndex1 = int(random(genesLength));
+    int cutPoint0 = min(randomIndex0, randomIndex1);
+    int cutPoint1 = max(randomIndex0, randomIndex1);
+    Log.d("cutPoint0 " + cutPoint0 + " " + "cutPoint1 " + cutPoint1);
+
+    // Two-point cut
+    for (int i = 0; i < genesLength; i++) {
+      if (i >= cutPoint0 && i <= cutPoint1) {
         babyGenes0[i] = parentGenes1[i];
         babyGenes1[i] = parentGenes0[i];
       } else {
