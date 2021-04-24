@@ -39,11 +39,11 @@ public class TableUtil {
 
     for (int i = 0; i < brainNames.length; i++) {
       String brainName = brainNames[i];
-      float[] genes = readNN(brainName);
+      float[] chromosome = readNN(brainName);
 
       Brain brain = new Brain();
       brain.setName(brainName);
-      brain.getNN().fromArray(genes);
+      brain.getNN().fromArray(chromosome);
       tour.population.add(brain);
     }
   }
@@ -59,9 +59,9 @@ public class TableUtil {
     for (int i = 0; i < tour.population.size(); i++) {
       Brain brain = tour.population.get(i);
       String brainName = brain.getName();
-      float[] genes = brain.getNN().toArray();
+      float[] chromosome = brain.getNN().toArray();
 
-      writeNN(brainName, genes);
+      writeNN(brainName, chromosome);
     }
 
     // Save to disk
@@ -91,11 +91,11 @@ public class TableUtil {
   }
 
   float[] readNN(String name) {
-    float[] genes = new float[numOfParams];
-    for (int i = 0; i< genes.length; i++) {
-      genes[i] = table.getFloat(i, name);
+    float[] chromosome = new float[numOfParams];
+    for (int i = 0; i< chromosome.length; i++) {
+      chromosome[i] = table.getFloat(i, name);
     }
 
-    return genes;
+    return chromosome;
   }
 }

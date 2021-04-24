@@ -75,9 +75,9 @@ class NeuralNetwork {
     return hiddenSize*inputSize + inputSize + outputSize*hiddenSize + outputSize;
   }
 
-  // Export genes
+  // Export chromosome
   float[] toArray() {
-    float[] genes = new float[size()];
+    float[] chromosome = new float[size()];
 
     float[] flatWeightsIH = this.weightsIH.toArray();
     float[] flatBiasH = this.biasH.toArray();
@@ -89,16 +89,16 @@ class NeuralNetwork {
     int destPos3 = destPos2 + flatBiasH.length;
     int destPos4 = destPos3 + flatweightsHO.length;
 
-    System.arraycopy(flatWeightsIH, 0, genes, destPos1, flatWeightsIH.length);
-    System.arraycopy(flatBiasH, 0, genes, destPos2, flatBiasH.length);
-    System.arraycopy(flatweightsHO, 0, genes, destPos3, flatweightsHO.length);
-    System.arraycopy(flatBiasO, 0, genes, destPos4, flatBiasO.length);
+    System.arraycopy(flatWeightsIH, 0, chromosome, destPos1, flatWeightsIH.length);
+    System.arraycopy(flatBiasH, 0, chromosome, destPos2, flatBiasH.length);
+    System.arraycopy(flatweightsHO, 0, chromosome, destPos3, flatweightsHO.length);
+    System.arraycopy(flatBiasO, 0, chromosome, destPos4, flatBiasO.length);
 
-    return genes;
+    return chromosome;
   }
 
-  // Import genes
-  void fromArray(float[] genes) {
+  // Import chromosome
+  void fromArray(float[] chromosome) {
     float[] flatWeightsIH = new float[hiddenSize*inputSize];
     float[] flatBiasH = new float[hiddenSize];
     float[] flatWeightsHO = new float[outputSize*hiddenSize];
@@ -109,10 +109,10 @@ class NeuralNetwork {
     int srcPos3 = srcPos2 + flatBiasH.length;
     int srcPos4 = srcPos3 + flatWeightsHO.length;
 
-    System.arraycopy(genes, srcPos1, flatWeightsIH, 0, flatWeightsIH.length);
-    System.arraycopy(genes, srcPos2, flatBiasH, 0, flatBiasH.length);
-    System.arraycopy(genes, srcPos3, flatWeightsHO, 0, flatWeightsHO.length);
-    System.arraycopy(genes, srcPos4, flatBiasO, 0, flatBiasO.length);
+    System.arraycopy(chromosome, srcPos1, flatWeightsIH, 0, flatWeightsIH.length);
+    System.arraycopy(chromosome, srcPos2, flatBiasH, 0, flatBiasH.length);
+    System.arraycopy(chromosome, srcPos3, flatWeightsHO, 0, flatWeightsHO.length);
+    System.arraycopy(chromosome, srcPos4, flatBiasO, 0, flatBiasO.length);
 
     this.weightsIH = this.weightsIH.fromArray(flatWeightsIH);
     this.biasH = this.biasH.fromArray(flatBiasH);
