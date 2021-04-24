@@ -296,13 +296,20 @@ class Tee {
   }
 
   void calcScore() {
-    score = (maxHP - tees.getEnemyHP(teeId)) * 10 - (maxHP - HP) * 5;
+    //score = (maxHP - tees.getEnemyHP(teeId)) * 10 - (maxHP - HP) * 5;
+    //if (tournament.winner == teeId) {
+    //  score += 100;
+    //  if (tees.getEnemyHP(teeId) == 0) score += tournament.roundTimeLeft;
+    //} else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
+    //  score -= 100;
+    //  if (HP == 0) score -= tournament.roundTimeLeft;
+    //}
+
+    /* positive scoring system test */
+    score = (maxHP - tees.getEnemyHP(teeId)) * 15;
     if (tournament.winner == teeId) {
       score += 100;
       if (tees.getEnemyHP(teeId) == 0) score += tournament.roundTimeLeft;
-    } else if (tournament.winner == tees.getEnemyTeeId(teeId)) {
-      score -= 100;
-      if (HP == 0) score -= tournament.roundTimeLeft;
     }
   }
 
